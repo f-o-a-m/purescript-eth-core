@@ -1,4 +1,4 @@
-module Spec.BigNumber (bigNumberSpec) where
+module UtilsSpec.BigNumber (bigNumberSpec) where
 
 
 import Prelude

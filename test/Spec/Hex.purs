@@ -1,25 +1,24 @@
-module Spec.Utils (utilsSpec) where
+module UtilsSpec.Hex (hexSpec) where
 
 import Prelude
 
 import Data.ByteString as BS
 import Data.Maybe (Maybe(Just), fromJust)
 import Network.Ethereum.Utils.BigNumber (decimal, embed, parseBigNumber)
-import Network.Ethereum.Utils.HexString (mkHexString)
-import Network.Ethereum.Utils.HexStringUtils (byteStringFromHexString, toUtf8, toAscii, fromUtf8, fromAscii)
+import Network.Ethereum.Utils.HexString (mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
-utilsSpec :: forall r . Spec r Unit
-utilsSpec = describe "utils-spec" do
+hexSpec :: forall r . Spec r Unit
+hexSpec = describe "hex-spec" do
 
     describe "bytestringFromHexString" do
 
       it "can convert byteStrings to HexString" do
         let hx = unsafePartial fromJust $ mkHexString "1234"
-            bs1 = byteStringFromHexString $ hx
+            bs1 = toByteString $ hx
             bs2 = BS.fromString "1234" Hex
         Just bs1 `shouldEqual` bs2
 

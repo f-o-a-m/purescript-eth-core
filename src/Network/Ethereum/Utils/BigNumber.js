@@ -1,6 +1,6 @@
 "use strict";
 
-var BigNumber = require('bn');
+var BigNumber = require('bn.js');
 
 exports._intToBigNumber = function(value) {
   return new BigNumber(value.toString(10), 10);
