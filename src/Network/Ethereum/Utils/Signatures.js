@@ -18,7 +18,7 @@ exports.isValidPrivate = function (privateKey) {
 
 // copied from ethereumjs-util, but more flexible with chainId
 exports.ecSign = function (privateKey, msgHash) {
-    var sig = EthUtil.secp256k1.sign(msgHash, privateKey);
+    var sig = secp256k1.sign(msgHash, privateKey);
     var ret = {};
     ret.r = sig.signature.slice(0, 32);
     ret.s = sig.signature.slice(32, 64);

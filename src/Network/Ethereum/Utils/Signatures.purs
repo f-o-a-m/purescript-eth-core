@@ -28,6 +28,7 @@ import Data.Foreign.Class (class Decode, class Encode)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Network.Ethereum.Utils.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
+import Network.Ethereum.Utils.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 
 -- | Opaque PrivateKey type
@@ -117,7 +118,7 @@ publicToAddress
   :: PublicKey
   -> Address
 publicToAddress (PublicKey publicKey) =
-  let addrHex = fromByteString publicKey
+  let addrHex = fromByteString $ keccak256 publicKey
   in unsafePartial fromJust <<< mkAddress $ dropHex 24 addrHex
 
 newtype Signature =
@@ -132,16 +133,21 @@ derive instance eqSignature :: Eq Signature
 instance showSignature :: Show Signature where
   show = genericShow
 
-foreign import ecSign :: Fn2 PrivateKey BS.ByteString BS.ByteString
+foreign import ecSign :: Fn2 PrivateKey BS.ByteString {r :: BS.ByteString, s :: BS.ByteString, v :: Int}
 
 -- | Sign the message with a `PrivateKey`
 signMessage
   :: PrivateKey
   -> BS.ByteString
-  -> BS.ByteString
-signMessage = runFn2 ecSign
+  -> Signature
+signMessage privateKey message =
+  let {r,s,v} = runFn2 ecSign privateKey message
+  in Signature { r: fromByteString r
+               , s: fromByteString s
+               , v
+               }
 
-foreign import ecRecover :: Fn3 BS.ByteString Int BS.ByteString PublicKey
+foreign import ecRecover :: Fn3 BS.ByteString BS.ByteString Int PublicKey
 
 -- | Recover the sender of the message from the `Signature`.
 recoverSender
@@ -149,7 +155,7 @@ recoverSender
   -> Signature
   -> PublicKey
 recoverSender messageHash (Signature {v,r,s}) =
-  runFn3 ecRecover messageHash v (toByteString r <> toByteString s)
+  runFn3 ecRecover messageHash (toByteString r <> toByteString s) v
 
 -- | Used in Ethereum to prevent replay attacks
 newtype ChainId = ChainId Int
