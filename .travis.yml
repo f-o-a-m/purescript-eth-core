@@ -5,5 +5,4 @@ node_js: stable
 install:
   - npm install
 script:
-  - pulp build
-  - pulp test
+  - npm test
