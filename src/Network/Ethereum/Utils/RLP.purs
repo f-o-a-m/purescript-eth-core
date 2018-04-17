@@ -7,7 +7,8 @@ module Network.Ethereum.Utils.RLP
 import Prelude
 import Data.ByteString (ByteString)
 import Network.Ethereum.Utils.BigNumber (BigNumber)
-import Network.Ethereum.Utils.HexString (Address, HexString, unAddress, unHex)
+import Network.Ethereum.Utils.HexString (HexString, unHex)
+import Network.Ethereum.Utils.Signatures (Address, unAddress)
 import Unsafe.Coerce (unsafeCoerce)
 
 class RLPEncode a where

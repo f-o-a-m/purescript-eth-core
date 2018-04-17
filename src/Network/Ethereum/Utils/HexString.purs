@@ -1,27 +1,45 @@
 module Network.Ethereum.Utils.HexString
   ( Sign(..)
   , Signed(..)
-  , asSigned
   , HexString
+  , asSigned
   , mkHexString
   , unHex
   , hexLength
+  , dropHex
   , takeHex
   , nullWord
-  , Address
-  , unAddress
-  , mkAddress
+  , getPadLength
+  , padLeftSigned
+  , padLeft
+  , padRightSigned
+  , padRight
+  , toUtf8
+  , fromUtf8
+  , toAscii
+  , fromAscii
+  , toSignedHexString
+  , toHexString
+  , toBigNumber
+  , toBigNumberFromSignedHexString
+  , toByteString
+  , fromByteString
   ) where
 
 import Prelude
 
-import Data.Array (uncons)
+import Data.Array (uncons, unsafeIndex, replicate)
+import Data.ByteString (ByteString, toString, fromString) as BS
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Int (even)
+import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Monoid (class Monoid)
 import Data.Set (fromFoldable, member) as Set
-import Data.String (Pattern(..), stripPrefix, toCharArray)
+import Data.String (Pattern(..), split, fromCharArray, stripPrefix, toCharArray)
 import Data.String as S
+import Network.Ethereum.Utils.BigNumber (BigNumber, toString, hexadecimal)
+import Node.Encoding (Encoding(Hex, UTF8, ASCII))
+import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign)
 
 --------------------------------------------------------------------------------
@@ -112,24 +130,91 @@ hexLength (HexString hx) = S.length hx
 takeHex :: Int -> HexString -> HexString
 takeHex n (HexString hx) = HexString $ S.take n hx
 
+dropHex :: Int -> HexString -> HexString
+dropHex n (HexString hx) = HexString $ S.drop n hx
+
 nullWord :: HexString
 nullWord = HexString "0000000000000000000000000000000000000000000000000000000000000000"
 
 --------------------------------------------------------------------------------
--- * Addresses
+-- | Utils
 --------------------------------------------------------------------------------
 
--- | Represents and Ethereum address, which is a 20 byte `HexString`
-newtype Address = Address HexString
+-- | Computes the number of 0s needed to pad a bytestring of the input length
+getPadLength :: Int -> Int
+getPadLength len =
+  let n = len `mod` 64
+  in if n == 0 then 0 else 64 - n
 
-derive newtype instance addressShow :: Show Address
-derive newtype instance addressEq :: Eq Address
-derive newtype instance addressOrd :: Ord Address
-derive newtype instance decodeAddress :: Decode Address
-derive newtype instance encodeAddress :: Encode Address
+-- | Pad a `Signed HexString` on the left until it has length == 0 mod 64.
+padLeftSigned :: Signed HexString -> HexString
+padLeftSigned (Signed s hx) =
+    let padLength = getPadLength $ hexLength hx
+        sgn = if s `eq` Pos then '0' else 'f'
+        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
+    in padding <> hx
 
-unAddress :: Address -> HexString
-unAddress (Address a) = a
+-- | Pad a `Signed HexString` on the right until it has length 0 mod 64.
+padRightSigned :: Signed HexString -> HexString
+padRightSigned (Signed s hx) =
+    let padLength = getPadLength $ hexLength hx
+        sgn = if s `eq` Pos then '0' else 'f'
+        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
+    in hx <> padding
 
-mkAddress :: HexString -> Maybe Address
-mkAddress hx = if hexLength hx == 40 then Just <<< Address $ hx else Nothing
+-- | Pad a `HexString` on the left with '0's until it has length == 0 mod 64.
+padLeft :: HexString -> HexString
+padLeft = padLeftSigned <<< asSigned
+
+
+-- | Pad a `HexString` on the right with 0's until it has length 0 mod 64.
+padRight :: HexString -> HexString
+padRight = padRightSigned <<< asSigned
+
+-- | Takes a hex string and produces the corresponding UTF8-decoded string.
+-- | This breaks at the first null octet, following the web3 function `toUft8`.
+--   Since 'split' always returns a nonempty list, this index is actually safe.
+toUtf8 :: HexString -> String
+toUtf8 hx =
+  let hx' = unsafePartial $ split (Pattern "00") (unHex hx) `unsafeIndex` 0
+  in flip BS.toString UTF8 $ bs (unHex hx)
+    where
+  bs :: String -> BS.ByteString
+  bs hxstr = unsafePartial  fromJust $ BS.fromString hxstr Hex
+
+-- | Takes a hex string and produces the corresponding ASCII decoded string.
+toAscii :: HexString -> String
+toAscii hx = flip BS.toString ASCII $ unsafePartial $ fromJust $ BS.fromString (unHex hx) Hex
+
+-- | Get the 'HexString' corresponding to the UTF8 encoding.
+fromUtf8 :: String -> HexString
+fromUtf8 s = unsafePartial fromJust $
+  let s' = unsafePartial $ split (Pattern "\0000") s `unsafeIndex` 0
+  in BS.fromString s' UTF8 >>= (pure <<< flip BS.toString Hex) >>=  mkHexString
+
+-- | Get the 'HexString' corresponding to the ASCII encoding.
+fromAscii :: String -> HexString
+fromAscii s = unsafePartial fromJust $
+  BS.fromString s ASCII >>= (pure <<< flip BS.toString Hex) >>= mkHexString
+
+toSignedHexString :: BigNumber -> Signed HexString
+toSignedHexString bn =
+  let rawStr = toString hexadecimal $ bn
+      str = unsafePartial fromJust <<< mkHexString $ if even (S.length rawStr) then rawStr else "0" <> rawStr
+      sgn = if bn < zero then Neg else Pos
+  in Signed sgn str
+
+toHexString :: BigNumber -> HexString
+toHexString bn =
+  let Signed _ n = toSignedHexString bn
+  in n
+
+foreign import toBigNumber :: HexString -> BigNumber
+
+foreign import toBigNumberFromSignedHexString :: HexString -> BigNumber
+
+toByteString :: HexString -> BS.ByteString
+toByteString hx = unsafePartial fromJust (BS.fromString (unHex hx) Hex)
+
+fromByteString :: BS.ByteString -> HexString
+fromByteString bs = unsafePartial fromJust $ mkHexString (BS.toString bs Hex)
