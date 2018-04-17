@@ -1,6 +1,5 @@
 var secp256k1 = require('secp256k1');
 
-
 // copied from ethereumjs-util
 exports.isValidPublic = function (publicKey) {
     if (publicKey.length === 64) {
