@@ -1,13 +1,13 @@
-module UtilsSpec.Signatures (signatureSpec) where
+module CoreSpec.Signatures (signatureSpec) where
 
 import Prelude
 
 import Common (RawTransaction(..), makeTransactionMessage, mkAddress', mkHexString', mkPrivateKey')
 import Control.Monad.Aff (Aff)
 import Data.Maybe (Maybe(..))
-import Network.Ethereum.Utils.BigNumber (embed)
-import Network.Ethereum.Utils.Keccak256 (keccak256)
-import Network.Ethereum.Utils.Signatures as Sig
+import Network.Ethereum.Core.BigNumber (embed)
+import Network.Ethereum.Core.Keccak256 (keccak256)
+import Network.Ethereum.Core.Signatures as Sig
 import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Runner (RunnerEffects)

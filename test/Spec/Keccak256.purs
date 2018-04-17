@@ -1,11 +1,11 @@
-module UtilsSpec.Keccak256 (keccak256Spec) where
+module CoreSpec.Keccak256 (keccak256Spec) where
 
 import Prelude
 
 import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
-import Network.Ethereum.Utils.Keccak256 (keccak256)
-import Network.Ethereum.Utils.HexString (mkHexString, toByteString)
+import Network.Ethereum.Core.Keccak256 (keccak256)
+import Network.Ethereum.Core.HexString (mkHexString, toByteString)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)

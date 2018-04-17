@@ -1,4 +1,4 @@
-module Network.Ethereum.Utils.Keccak256
+module Network.Ethereum.Core.Keccak256
   ( class Keccak256
   , keccak256
   , toSelector
@@ -8,7 +8,7 @@ import Prelude
 
 import Data.ByteString (ByteString, fromString, toString)
 import Data.Maybe (fromJust)
-import Network.Ethereum.Utils.HexString (HexString, takeHex, unHex, mkHexString)
+import Network.Ethereum.Core.HexString (HexString, takeHex, unHex, mkHexString)
 import Node.Encoding (Encoding(Hex, UTF8))
 import Partial.Unsafe (unsafePartial)
 

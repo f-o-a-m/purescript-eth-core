@@ -1,4 +1,4 @@
-module Network.Ethereum.Utils.BigNumber
+module Network.Ethereum.Core.BigNumber
   ( BigNumber
   , class Algebra, embed
   , pow

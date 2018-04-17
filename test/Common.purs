@@ -6,10 +6,10 @@ import Data.ByteString as BS
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), maybe)
-import Network.Ethereum.Utils.BigNumber (BigNumber)
-import Network.Ethereum.Utils.HexString as Hex
-import Network.Ethereum.Utils.RLP as RLP
-import Network.Ethereum.Utils.Signatures as Sig
+import Network.Ethereum.Core.BigNumber (BigNumber)
+import Network.Ethereum.Core.HexString as Hex
+import Network.Ethereum.Core.RLP as RLP
+import Network.Ethereum.Core.Signatures as Sig
 import Partial.Unsafe (unsafeCrashWith)
 
 
