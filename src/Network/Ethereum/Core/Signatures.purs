@@ -1,4 +1,4 @@
-module Network.Ethereum.Utils.Signatures
+module Network.Ethereum.Core.Signatures
   ( PrivateKey
   , PublicKey
   , unPublicKey
@@ -27,8 +27,8 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Foreign.Class (class Decode, class Encode)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Network.Ethereum.Utils.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
-import Network.Ethereum.Utils.Keccak256 (keccak256)
+import Network.Ethereum.Core.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
+import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 
 -- | Opaque PrivateKey type

@@ -1,4 +1,4 @@
-module Network.Ethereum.Utils.RLP
+module Network.Ethereum.Core.RLP
   ( class RLPEncode
   , RLPObject(..)
   , rlpEncode
@@ -6,9 +6,9 @@ module Network.Ethereum.Utils.RLP
 
 import Prelude
 import Data.ByteString (ByteString)
-import Network.Ethereum.Utils.BigNumber (BigNumber)
-import Network.Ethereum.Utils.HexString (HexString, unHex)
-import Network.Ethereum.Utils.Signatures (Address, unAddress)
+import Network.Ethereum.Core.BigNumber (BigNumber)
+import Network.Ethereum.Core.HexString (HexString, unHex)
+import Network.Ethereum.Core.Signatures (Address, unAddress)
 import Unsafe.Coerce (unsafeCoerce)
 
 class RLPEncode a where

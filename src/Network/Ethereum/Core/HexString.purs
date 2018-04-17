@@ -1,4 +1,4 @@
-module Network.Ethereum.Utils.HexString
+module Network.Ethereum.Core.HexString
   ( Sign(..)
   , Signed(..)
   , HexString
@@ -37,7 +37,7 @@ import Data.Monoid (class Monoid)
 import Data.Set (fromFoldable, member) as Set
 import Data.String (Pattern(..), split, fromCharArray, stripPrefix, toCharArray)
 import Data.String as S
-import Network.Ethereum.Utils.BigNumber (BigNumber, toString, hexadecimal)
+import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign)

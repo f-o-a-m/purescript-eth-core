@@ -1,4 +1,4 @@
-module Network.Ethereum.Utils.Keccak256
+module Network.Ethereum.Core.Keccak256
   ( class Keccak256
   , keccak256
   , toSelector
@@ -6,10 +6,10 @@ module Network.Ethereum.Utils.Keccak256
 
 import Prelude
 
-import Data.ByteString (ByteString, fromString, toString)
+import Data.ByteString (ByteString, fromString)
 import Data.Maybe (fromJust)
-import Network.Ethereum.Utils.HexString (HexString, takeHex, unHex, mkHexString)
-import Node.Encoding (Encoding(Hex, UTF8))
+import Network.Ethereum.Core.HexString (HexString, fromByteString, takeHex, toByteString)
+import Node.Encoding (Encoding(UTF8))
 import Partial.Unsafe (unsafePartial)
 
 --------------------------------------------------------------------------------
@@ -28,8 +28,8 @@ instance keccak256String :: Keccak256 String where
   keccak256 =  keccak256 <<< unsafePartial fromJust <<< flip fromString UTF8
 
 instance keccak256HexString :: Keccak256 HexString where
-  keccak256 = keccak256 <<< unsafePartial fromJust <<< flip fromString Hex <<< unHex
+  keccak256 = keccak256 <<< toByteString
 
 -- | convert a string representing a type signature into a selector
 toSelector :: String -> HexString
-toSelector = takeHex 8 <<< unsafePartial fromJust <<< mkHexString <<< flip toString Hex <<< keccak256
+toSelector = takeHex 8 <<< fromByteString <<< keccak256

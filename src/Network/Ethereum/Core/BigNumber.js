@@ -1,6 +1,8 @@
 "use strict";
-
 var BigNumber = require('bn.js');
+
+//NOTE: According to the documentation, many binary operators can take a normal js Number
+//by suffixing the version for BN with 'n'.
 
 exports._intToBigNumber = function(value) {
   return new BigNumber(value.toString(10), 10);

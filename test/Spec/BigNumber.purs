@@ -1,11 +1,11 @@
-module UtilsSpec.BigNumber (bigNumberSpec) where
+module CoreSpec.BigNumber (bigNumberSpec) where
 
 
 import Prelude
 import Data.Maybe (Maybe(Just))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Network.Ethereum.Utils.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
+import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
 
 bigNumberSpec :: forall r . Spec r Unit
 bigNumberSpec = describe "BigNumber-spec" do

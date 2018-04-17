@@ -1,4 +1,4 @@
-module UtilsSpec.RLP (rlpSpec) where
+module CoreSpec.RLP (rlpSpec) where
 
 import Prelude
 
@@ -6,10 +6,10 @@ import Common (RawTransaction(..), makeTransactionMessage, mkAddress', mkHexStri
 import Data.ByteString as BS
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Monoid (mempty)
-import Network.Ethereum.Utils.BigNumber (embed, pow)
-import Network.Ethereum.Utils.Keccak256 (keccak256)
-import Network.Ethereum.Utils.RLP as RLP
-import Network.Ethereum.Utils.Signatures as Sig
+import Network.Ethereum.Core.BigNumber (embed, pow)
+import Network.Ethereum.Core.Keccak256 (keccak256)
+import Network.Ethereum.Core.RLP as RLP
+import Network.Ethereum.Core.Signatures as Sig
 import Node.Encoding (Encoding(Hex, UTF8))
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, it, describe)

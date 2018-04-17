@@ -1,11 +1,10 @@
-module UtilsSpec.Hex (hexSpec) where
+module CoreSpec.Hex (hexSpec) where
 
 import Prelude
 
 import Data.ByteString as BS
 import Data.Maybe (Maybe(Just), fromJust)
-import Network.Ethereum.Utils.BigNumber (decimal, embed, parseBigNumber)
-import Network.Ethereum.Utils.HexString (mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
+import Network.Ethereum.Core.HexString (mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)

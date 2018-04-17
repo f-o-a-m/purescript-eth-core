@@ -1,9 +1,9 @@
 module Network.Ethereum.Types
-  ( module Network.Ethereum.Utils.HexString
-  , module Network.Ethereum.Utils.BigNumber
-  , module Network.Ethereum.Utils.Signatures
+  ( module Network.Ethereum.Core.HexString
+  , module Network.Ethereum.Core.BigNumber
+  , module Network.Ethereum.Core.Signatures
   ) where
 
-import Network.Ethereum.Utils.BigNumber (BigNumber, embed)
-import Network.Ethereum.Utils.HexString (HexString, mkHexString, unHex)
-import Network.Ethereum.Utils.Signatures (Address, mkAddress, unAddress)
+import Network.Ethereum.Core.BigNumber (BigNumber, embed)
+import Network.Ethereum.Core.HexString (HexString, mkHexString, unHex)
+import Network.Ethereum.Core.Signatures (Address, mkAddress, unAddress)
