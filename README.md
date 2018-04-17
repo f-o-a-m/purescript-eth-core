@@ -1,4 +1,4 @@
-# purescript-eth-utils
+# purescript-eth-core
 
 [![Build Status](https://travis-ci.org/f-o-a-m/purescript-eth-utils.svg?branch=master)](https://travis-ci.org/f-o-a-m/purescript-eth-utils)
 
