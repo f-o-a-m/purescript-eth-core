@@ -1,5 +1,5 @@
 {
-  "name": "purescript-eth-utils",
+  "name": "purescript-eth-core",
   "ignore": [
     "**/.*",
     "node_modules",
