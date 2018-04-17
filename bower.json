@@ -1,5 +1,16 @@
 {
   "name": "purescript-eth-core",
+  "description": "Core types and utils module for ethereum",
+  "main": "",
+  "authors": [
+    "Blinky <blinky3713@gmail.com>"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/f-o-a-m/purescript-eth-core",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/f-o-a-m/purescript-eth-core.git"
+  },
   "ignore": [
     "**/.*",
     "node_modules",
