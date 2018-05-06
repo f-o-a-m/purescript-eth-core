@@ -23,6 +23,7 @@ import Prelude
 
 import Data.Argonaut as A
 import Data.ByteString as BS
+import Data.Either (Either(Left))
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Foreign (ForeignError(..), fail)
@@ -114,7 +115,7 @@ instance decodeJsonAddress :: A.DecodeJson Address where
     hxString <- A.decodeJson json
     case mkAddress hxString of
       Just res -> pure res
-      Nothing -> A.fail $ "Address must be 20 bytes long: " <> show hxString
+      Nothing -> Left $ "Address must be 20 bytes long: " <> show hxString
 
 instance encodeJsonAddress :: A.EncodeJson Address where
   encodeJson = A.encodeJson <<< unAddress

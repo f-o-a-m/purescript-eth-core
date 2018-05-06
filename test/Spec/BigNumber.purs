@@ -2,7 +2,10 @@ module CoreSpec.BigNumber (bigNumberSpec) where
 
 
 import Prelude
-import Data.Maybe (Maybe(Just))
+import Data.Argonaut as A
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(Just), fromJust)
+import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
@@ -47,3 +50,11 @@ bigNumberSpec = describe "BigNumber-spec" do
         ((parseBigNumber decimal "21") >>= \x -> pure $ x - zero) `shouldEqual` parseBigNumber hexadecimal "0x15"
         (Just $ one `mul` one) `shouldEqual` parseBigNumber decimal "1"
         (Just $ one * embed (-7)) `shouldEqual` parseBigNumber hexadecimal "-0x7"
+
+      it "can do the json coding and encoding properly" do
+       map A.encodeJson (parseBigNumber decimal "1")  `shouldEqual` (Just $ A.fromString "1")
+       let bnJson = A.fromString "1"
+       (A.encodeJson <$> (A.decodeJson bnJson :: Either String BigNumber)) `shouldEqual` (Right bnJson)
+       let bnJsonHex = A.fromString "0x01"
+       (A.decodeJson bnJsonHex :: Either String BigNumber) `shouldEqual`
+         Left "Failed to parse BigNumber from stringified Integer: 0x01"

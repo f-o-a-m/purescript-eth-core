@@ -13,6 +13,7 @@ module Network.Ethereum.Core.BigNumber
 import Prelude
 
 import Data.Argonaut as A
+import Data.Either (Either(Left))
 import Data.Foreign (ForeignError(..), readString, fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
@@ -137,7 +138,7 @@ instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
   decodeJson json = do
     str <- A.decodeJson json
     case parseBigNumber Int.decimal str of
-      Nothing -> A.fail $ "Failed to parse BigNumer from stringified Integer: " <> str
+      Nothing -> Left $ "Failed to parse BigNumber from stringified Integer: " <> str
       Just res -> pure res
 
 instance encodeJsonBigNumber :: A.EncodeJson BigNumber where

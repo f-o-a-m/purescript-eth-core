@@ -47,9 +47,13 @@ exports.fromStringAsImpl = function (just) {
                 result = new BigNumber(s, radix);
               }
             } else {
-              result = new BigNumber(s, radix);
+                if (s.indexOf('0x') === 0 || s.indexOf('-0x') === 0) {
+                    throw "0x prefix invalid prefix for radix:";
+                } else {
+                  result = new BigNumber(s, radix);
+                }
             }
-        } catch (e) {
+        } catch (_) {
           return nothing;
         }
         return just(result);

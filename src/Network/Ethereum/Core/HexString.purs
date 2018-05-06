@@ -31,6 +31,7 @@ import Prelude
 import Data.Argonaut as A
 import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
+import Data.Either (Either(Left))
 import Data.Foreign (ForeignError(..), fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (even)
@@ -107,7 +108,7 @@ instance decodeJsonHexString :: A.DecodeJson HexString where
     str <- A.decodeJson json
     case mkHexString str of
       Just res -> pure res
-      Nothing -> A.fail $ "Failed to parse as HexString: " <> str
+      Nothing -> Left $ "Failed to parse as HexString: " <> str
 
 instance encodeJsonHexString :: A.EncodeJson HexString where
   encodeJson hx = A.encodeJson $ "0x" <> unHex hx
