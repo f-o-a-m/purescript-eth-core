@@ -2,9 +2,11 @@ module CoreSpec.Hex (hexSpec) where
 
 import Prelude
 
+import Data.Argonaut as A
+import Data.Either (Either(..))
 import Data.ByteString as BS
 import Data.Maybe (Maybe(Just), fromJust)
-import Network.Ethereum.Core.HexString (mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
+import Network.Ethereum.Core.HexString (HexString, mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
@@ -46,3 +48,12 @@ hexSpec = describe "hex-spec" do
       it "can convert asci to hex" do
         fromAscii "myString" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e67"
         fromAscii "myString\00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700"
+
+    describe "json tests" do
+
+      it "can convert hex strings to and from json" do
+
+        let hx = (unsafePartial (fromJust <<< mkHexString) "0x6d79537472696e67")
+            hxJson = A.fromString "0x6d79537472696e67"
+        (A.encodeJson <$> (A.decodeJson hxJson :: Either String HexString)) `shouldEqual` Right hxJson
+        A.decodeJson (A.encodeJson hx) `shouldEqual` Right hx
