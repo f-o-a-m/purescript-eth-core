@@ -28,8 +28,10 @@ module Network.Ethereum.Core.HexString
 
 import Prelude
 
+import Data.Argonaut as A
 import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
+import Data.Foreign (ForeignError(..), fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (even)
 import Data.Maybe (Maybe(..), fromJust, isJust)
@@ -90,15 +92,25 @@ derive newtype instance monoidStringEq :: Monoid HexString
 instance decodeHexString :: Decode HexString where
   decode s = do
     str <- decode s
-    case stripPrefix (Pattern "0x") str of
-      Nothing -> pure <<< HexString $ str
-      Just res -> pure <<< HexString $ res
+    case mkHexString str of
+      Just res -> pure res
+      Nothing -> fail <<< ForeignError $ "Failed to parse as HexString: " <> str
 
 instance readFHexString :: ReadForeign HexString where
   readImpl = decode
 
 instance encodeHexString :: Encode HexString where
   encode = encode <<< append "0x" <<< unHex
+
+instance decodeJsonHexString :: A.DecodeJson HexString where
+  decodeJson json = do
+    str <- A.decodeJson json
+    case mkHexString str of
+      Just res -> pure res
+      Nothing -> A.fail $ "Failed to parse as HexString: " <> str
+
+instance encodeJsonHexString :: A.EncodeJson HexString where
+  encodeJson hx = A.encodeJson $ "0x" <> unHex hx
 
 unHex :: HexString -> String
 unHex (HexString hx) = hx

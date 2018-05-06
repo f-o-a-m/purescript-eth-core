@@ -12,7 +12,8 @@ module Network.Ethereum.Core.BigNumber
 
 import Prelude
 
-import Data.Foreign (Foreign)
+import Data.Argonaut as A
+import Data.Foreign (ForeignError(..), readString, fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
@@ -119,13 +120,25 @@ unsafeToInt = Int.floor <<< toNumber
 -- | Take the integer part of a big number
 foreign import floorBigNumber :: BigNumber -> BigNumber
 
-foreign import toBigNumber :: Foreign -> BigNumber
-
 instance decodeBigNumber :: Decode BigNumber where
-  decode = pure <<< toBigNumber
+  decode a = do
+    str <- readString a
+    case parseBigNumber Int.decimal str of
+      Nothing -> fail <<< ForeignError $ "Could not parse BigNumber from stringified Integer: " <> str
+      Just res -> pure res
 
 instance readFBigNumber :: ReadForeign BigNumber where
   readImpl = decode
 
 instance encodeBigNumber :: Encode BigNumber where
   encode = encode <<< (append "0x") <<< toString Int.hexadecimal
+
+instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
+  decodeJson json = do
+    str <- A.decodeJson json
+    case parseBigNumber Int.decimal str of
+      Nothing -> A.fail $ "Failed to parse BigNumer from stringified Integer: " <> str
+      Just res -> pure res
+
+instance encodeJsonBigNumber :: A.EncodeJson BigNumber where
+  encodeJson = A.encodeJson <<< toString Int.decimal

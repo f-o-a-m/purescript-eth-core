@@ -19,16 +19,17 @@
   ],
   "dependencies": {
     "purescript-prelude": "^3.3.0",
-    "purescript-console": "^3.0.0",
     "purescript-modules": "^3.0.0",
     "purescript-foreign": "^4.0.1",
-    "purescript-simple-json": "^2.0.1",
     "purescript-sets": "^3.2.0",
     "purescript-bytestrings": "^6.0.0",
-    "purescript-spec": "^2.0.0",
-    "purescript-debug": "^3.0.0"
+    "purescript-simple-json": "^3.0.0",
+    "purescript-argonaut": "^3.1.0",
+    "purescript-errors": "^3.0.0"
   },
   "devDependencies": {
-    "purescript-psci-support": "^3.0.0"
+    "purescript-psci-support": "^3.0.0",
+    "purescript-spec": "^2.0.0",
+    "purescript-debug": "^3.0.0"
   }
 }

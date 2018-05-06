@@ -21,10 +21,12 @@ module Network.Ethereum.Core.Signatures
 
 import Prelude
 
+import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Maybe (Maybe(..), fromJust)
-import Data.Foreign.Class (class Decode, class Encode)
+import Data.Foreign (ForeignError(..), fail)
+import Data.Foreign.Class (class Decode, class Encode, decode)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Network.Ethereum.Core.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
@@ -98,8 +100,24 @@ newtype Address = Address HexString
 derive newtype instance addressShow :: Show Address
 derive newtype instance addressEq :: Eq Address
 derive newtype instance addressOrd :: Ord Address
-derive newtype instance decodeAddress :: Decode Address
 derive newtype instance encodeAddress :: Encode Address
+
+instance decodeAddress :: Decode Address where
+  decode a = do
+    hxString <- decode a
+    case mkAddress hxString of
+      Nothing -> fail <<< ForeignError $ "Address must be 20 bytes long: " <> show hxString
+      Just res -> pure res
+
+instance decodeJsonAddress :: A.DecodeJson Address where
+  decodeJson json = do
+    hxString <- A.decodeJson json
+    case mkAddress hxString of
+      Just res -> pure res
+      Nothing -> A.fail $ "Address must be 20 bytes long: " <> show hxString
+
+instance encodeJsonAddress :: A.EncodeJson Address where
+  encodeJson = A.encodeJson <<< unAddress
 
 unAddress :: Address -> HexString
 unAddress (Address a) = a
