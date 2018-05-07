@@ -2,8 +2,6 @@ module CoreSpec.BigNumber (bigNumberSpec) where
 
 
 import Prelude
-import Data.Argonaut as A
-import Data.Either (Either(..))
 import Data.Maybe (Maybe(Just))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -49,10 +47,3 @@ bigNumberSpec = describe "BigNumber-spec" do
         ((parseBigNumber decimal "21") >>= \x -> pure $ x - zero) `shouldEqual` parseBigNumber hexadecimal "0x15"
         (Just $ one `mul` one) `shouldEqual` parseBigNumber decimal "1"
         (Just $ one * embed (-7)) `shouldEqual` parseBigNumber hexadecimal "-0x7"
-
-      it "can do the json coding and encoding properly" do
-        A.encodeJson (embed 1 :: BigNumber)  `shouldEqual` (A.fromString "0x1")
-        let bnJson = A.fromString "0x1"
-        (A.encodeJson <$> (A.decodeJson bnJson :: Either String BigNumber)) `shouldEqual` (Right bnJson)
-        let bnJsonHex = A.fromString "0x0f"
-        (A.decodeJson bnJsonHex :: Either String BigNumber) `shouldEqual` (Right $ embed 15)
