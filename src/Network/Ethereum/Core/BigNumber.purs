@@ -124,7 +124,7 @@ foreign import floorBigNumber :: BigNumber -> BigNumber
 instance decodeBigNumber :: Decode BigNumber where
   decode a = do
     str <- readString a
-    case parseBigNumber Int.decimal str of
+    case parseBigNumber Int.hexadecimal str of
       Nothing -> fail <<< ForeignError $ "Could not parse BigNumber from stringified Integer: " <> str
       Just res -> pure res
 
@@ -137,9 +137,9 @@ instance encodeBigNumber :: Encode BigNumber where
 instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
   decodeJson json = do
     str <- A.decodeJson json
-    case parseBigNumber Int.decimal str of
-      Nothing -> Left $ "Failed to parse BigNumber from stringified Integer: " <> str
+    case parseBigNumber Int.hexadecimal str of
+      Nothing -> Left $ "Failed to parse BigNumber from hexdecimal string: " <> str
       Just res -> pure res
 
 instance encodeJsonBigNumber :: A.EncodeJson BigNumber where
-  encodeJson = A.encodeJson <<< toString Int.decimal
+  encodeJson = A.encodeJson <<< (append "0x") <<< toString Int.hexadecimal
