@@ -13,7 +13,7 @@ module Network.Ethereum.Core.BigNumber
 import Prelude
 
 import Data.Argonaut as A
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foreign (Foreign, ForeignError(..), readString, fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
@@ -123,12 +123,18 @@ foreign import floorBigNumber :: BigNumber -> BigNumber
 
 foreign import toBigNumber :: Foreign -> BigNumber
 
+_encode :: BigNumber -> String
+_encode = (append "0x") <<< toString Int.hexadecimal
+
+_decode :: String -> Either String BigNumber
+_decode str = case parseBigNumber Int.hexadecimal str of
+  Nothing -> Left $ "Failed to parse as BigNumber: " <> str
+  Just n -> Right n
+
 instance decodeBigNumber :: Decode BigNumber where
   decode x = do
     str <- readString x
-    case parseBigNumber Int.hexadecimal str of 
-      Nothing -> fail $ ForeignError $ "Failed to parse as BigNumber: " <> str
-      Just n -> pure n
+    either (fail <<< ForeignError) pure $ _decode str
 
 instance readFBigNumber :: ReadForeign BigNumber where
   readImpl = decode
@@ -137,14 +143,12 @@ instance writeFBigNumber :: WriteForeign BigNumber where
   writeImpl = encode
 
 instance encodeBigNumber :: Encode BigNumber where
-  encode = encode <<< (append "0x") <<< toString Int.hexadecimal
+  encode = encode <<< _encode
 
 instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
   decodeJson json = do
     str <- A.decodeJson json
-    case parseBigNumber Int.hexadecimal str of
-      Nothing -> Left $ "Failed to parse BigNumber from hexdecimal string: " <> str
-      Just res -> pure res
+    _decode str
 
 instance encodeJsonBigNumber :: A.EncodeJson BigNumber where
-  encodeJson = A.encodeJson <<< (append "0x") <<< toString Int.hexadecimal
+  encodeJson = A.encodeJson <<< _encode
