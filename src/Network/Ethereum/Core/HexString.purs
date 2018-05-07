@@ -31,7 +31,7 @@ import Prelude
 import Data.Argonaut as A
 import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
-import Data.Either (Either(Left))
+import Data.Either (Either(..), either)
 import Data.Foreign (ForeignError(..), fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (even)
@@ -90,12 +90,18 @@ derive newtype instance hexStringOrd :: Ord HexString
 derive newtype instance semigpStringEq :: Semigroup HexString
 derive newtype instance monoidStringEq :: Monoid HexString
 
+_encode :: HexString -> String
+_encode = append "0x" <<< unHex
+
+_decode :: String -> Either String HexString
+_decode str = case mkHexString str of
+  Just res -> Right res
+  Nothing -> Left $ "Failed to parse as HexString: " <> str
+
 instance decodeHexString :: Decode HexString where
   decode s = do
     str <- decode s
-    case mkHexString str of
-      Just res -> pure res
-      Nothing -> fail <<< ForeignError $ "Failed to parse as HexString: " <> str
+    either (fail <<< ForeignError) pure $ _decode str
 
 instance readFHexString :: ReadForeign HexString where
   readImpl = decode
@@ -104,17 +110,15 @@ instance writeFHexString :: WriteForeign HexString where
   writeImpl = encode
 
 instance encodeHexString :: Encode HexString where
-  encode = encode <<< append "0x" <<< unHex
+  encode = encode <<< _encode
 
 instance decodeJsonHexString :: A.DecodeJson HexString where
   decodeJson json = do
     str <- A.decodeJson json
-    case mkHexString str of
-      Just res -> pure res
-      Nothing -> Left $ "Failed to parse as HexString: " <> str
+    _decode str
 
 instance encodeJsonHexString :: A.EncodeJson HexString where
-  encodeJson hx = A.encodeJson $ "0x" <> unHex hx
+  encodeJson = A.encodeJson <<< _encode
 
 unHex :: HexString -> String
 unHex (HexString hx) = hx

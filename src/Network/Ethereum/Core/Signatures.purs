@@ -23,7 +23,7 @@ import Prelude
 
 import Data.Argonaut as A
 import Data.ByteString as BS
-import Data.Either (Either(Left))
+import Data.Either (Either(..), either)
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Foreign (ForeignError(..), fail)
@@ -104,19 +104,20 @@ derive newtype instance addressEq :: Eq Address
 derive newtype instance addressOrd :: Ord Address
 derive newtype instance encodeAddress :: Encode Address
 
+_decode :: HexString -> Either String Address
+_decode hx = case mkAddress hx of
+  Nothing -> Left $ "Address must be 20 bytes long: " <> show hx
+  Just res -> Right res
+
 instance decodeAddress :: Decode Address where
   decode a = do
     hxString <- decode a
-    case mkAddress hxString of
-      Nothing -> fail <<< ForeignError $ "Address must be 20 bytes long: " <> show hxString
-      Just res -> pure res
+    either (fail <<< ForeignError) pure $ _decode hxString
 
 instance decodeJsonAddress :: A.DecodeJson Address where
   decodeJson json = do
     hxString <- A.decodeJson json
-    case mkAddress hxString of
-      Just res -> pure res
-      Nothing -> Left $ "Address must be 20 bytes long: " <> show hxString
+    _decode hxString
 
 instance encodeJsonAddress :: A.EncodeJson Address where
   encodeJson = A.encodeJson <<< unAddress
