@@ -27,12 +27,13 @@ import Data.Either (Either(Left))
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Foreign (ForeignError(..), fail)
-import Data.Foreign.Class (class Decode, class Encode, decode)
+import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Network.Ethereum.Core.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
+import Simple.JSON (class ReadForeign, class WriteForeign)
 
 -- | Opaque PrivateKey type
 newtype PrivateKey = PrivateKey BS.ByteString
@@ -119,6 +120,12 @@ instance decodeJsonAddress :: A.DecodeJson Address where
 
 instance encodeJsonAddress :: A.EncodeJson Address where
   encodeJson = A.encodeJson <<< unAddress
+
+instance readFAddress :: ReadForeign Address where
+  readImpl = decode
+
+instance writeFAddress :: WriteForeign Address where
+  writeImpl = encode
 
 unAddress :: Address -> HexString
 unAddress (Address a) = a

@@ -19,7 +19,7 @@ import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
 import Data.Module (class LeftModule, class RightModule)
-import Simple.JSON (class ReadForeign)
+import Simple.JSON (class ReadForeign, class WriteForeign)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
@@ -130,6 +130,9 @@ instance decodeBigNumber :: Decode BigNumber where
 
 instance readFBigNumber :: ReadForeign BigNumber where
   readImpl = decode
+
+instance writeFBigNumber :: WriteForeign BigNumber where
+  writeImpl = encode
 
 instance encodeBigNumber :: Encode BigNumber where
   encode = encode <<< (append "0x") <<< toString Int.hexadecimal

@@ -43,7 +43,7 @@ import Data.String as S
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign)
+import Simple.JSON (class ReadForeign, class WriteForeign)
 
 --------------------------------------------------------------------------------
 -- * Signed Values
@@ -99,6 +99,9 @@ instance decodeHexString :: Decode HexString where
 
 instance readFHexString :: ReadForeign HexString where
   readImpl = decode
+
+instance writeFHexString :: WriteForeign HexString where
+  writeImpl = encode
 
 instance encodeHexString :: Encode HexString where
   encode = encode <<< append "0x" <<< unHex
