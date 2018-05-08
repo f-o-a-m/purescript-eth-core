@@ -49,7 +49,7 @@ exports.fromStringAsImpl = function (just) {
             } else {
               result = new BigNumber(s, radix);
             }
-        } catch (e) {
+        } catch (_) {
           return nothing;
         }
         return just(result);
@@ -101,15 +101,4 @@ var isBigNumber = function (object) {
 var isString = function (object) {
     return typeof object === 'string' ||
         (object && object.constructor && object.constructor.name === 'String');
-};
-
-exports.toBigNumber = function(number) {
-    if (isBigNumber(number))
-        return number;
-
-    if (isString(number) && (number.indexOf('0x') === 0 || number.indexOf('-0x') === 0)) {
-        return new BigNumber(number.replace('0x',''), 16);
-    }
-
-    return new BigNumber(number.toString(10), 10);
 };

@@ -14,7 +14,7 @@ import Prelude
 
 import Data.Argonaut as A
 import Data.Either (Either(..), either)
-import Data.Foreign (Foreign, ForeignError(..), readString, fail)
+import Data.Foreign (ForeignError(..), readString, fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
@@ -120,8 +120,6 @@ unsafeToInt = Int.floor <<< toNumber
 
 -- | Take the integer part of a big number
 foreign import floorBigNumber :: BigNumber -> BigNumber
-
-foreign import toBigNumber :: Foreign -> BigNumber
 
 _encode :: BigNumber -> String
 _encode = (append "0x") <<< toString Int.hexadecimal
