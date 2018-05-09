@@ -28,8 +28,11 @@ module Network.Ethereum.Core.HexString
 
 import Prelude
 
+import Data.Argonaut as A
 import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
+import Data.Either (Either(..), either)
+import Data.Foreign (ForeignError(..), fail)
 import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (even)
 import Data.Maybe (Maybe(..), fromJust, isJust)
@@ -40,7 +43,7 @@ import Data.String as S
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign)
+import Simple.JSON (class ReadForeign, class WriteForeign)
 
 --------------------------------------------------------------------------------
 -- * Signed Values
@@ -87,18 +90,35 @@ derive newtype instance hexStringOrd :: Ord HexString
 derive newtype instance semigpStringEq :: Semigroup HexString
 derive newtype instance monoidStringEq :: Monoid HexString
 
+_encode :: HexString -> String
+_encode = append "0x" <<< unHex
+
+_decode :: String -> Either String HexString
+_decode str = case mkHexString str of
+  Just res -> Right res
+  Nothing -> Left $ "Failed to parse as HexString: " <> str
+
 instance decodeHexString :: Decode HexString where
   decode s = do
     str <- decode s
-    case stripPrefix (Pattern "0x") str of
-      Nothing -> pure <<< HexString $ str
-      Just res -> pure <<< HexString $ res
+    either (fail <<< ForeignError) pure $ _decode str
 
 instance readFHexString :: ReadForeign HexString where
   readImpl = decode
 
+instance writeFHexString :: WriteForeign HexString where
+  writeImpl = encode
+
 instance encodeHexString :: Encode HexString where
-  encode = encode <<< append "0x" <<< unHex
+  encode = encode <<< _encode
+
+instance decodeJsonHexString :: A.DecodeJson HexString where
+  decodeJson json = do
+    str <- A.decodeJson json
+    _decode str
+
+instance encodeJsonHexString :: A.EncodeJson HexString where
+  encodeJson = A.encodeJson <<< _encode
 
 unHex :: HexString -> String
 unHex (HexString hx) = hx

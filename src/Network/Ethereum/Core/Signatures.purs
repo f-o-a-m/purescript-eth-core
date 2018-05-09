@@ -21,15 +21,19 @@ module Network.Ethereum.Core.Signatures
 
 import Prelude
 
+import Data.Argonaut as A
 import Data.ByteString as BS
+import Data.Either (Either(..), either)
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Maybe (Maybe(..), fromJust)
-import Data.Foreign.Class (class Decode, class Encode)
+import Data.Foreign (ForeignError(..), fail)
+import Data.Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Network.Ethereum.Core.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
+import Simple.JSON (class ReadForeign, class WriteForeign)
 
 -- | Opaque PrivateKey type
 newtype PrivateKey = PrivateKey BS.ByteString
@@ -98,8 +102,31 @@ newtype Address = Address HexString
 derive newtype instance addressShow :: Show Address
 derive newtype instance addressEq :: Eq Address
 derive newtype instance addressOrd :: Ord Address
-derive newtype instance decodeAddress :: Decode Address
 derive newtype instance encodeAddress :: Encode Address
+
+_decode :: HexString -> Either String Address
+_decode hx = case mkAddress hx of
+  Nothing -> Left $ "Address must be 20 bytes long: " <> show hx
+  Just res -> Right res
+
+instance decodeAddress :: Decode Address where
+  decode a = do
+    hxString <- decode a
+    either (fail <<< ForeignError) pure $ _decode hxString
+
+instance decodeJsonAddress :: A.DecodeJson Address where
+  decodeJson json = do
+    hxString <- A.decodeJson json
+    _decode hxString
+
+instance encodeJsonAddress :: A.EncodeJson Address where
+  encodeJson = A.encodeJson <<< unAddress
+
+instance readFAddress :: ReadForeign Address where
+  readImpl = decode
+
+instance writeFAddress :: WriteForeign Address where
+  writeImpl = encode
 
 unAddress :: Address -> HexString
 unAddress (Address a) = a
