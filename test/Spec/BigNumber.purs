@@ -2,10 +2,19 @@ module CoreSpec.BigNumber (bigNumberSpec) where
 
 
 import Prelude
-import Data.Maybe (Maybe(Just))
+
+import Control.Monad.Except (runExcept)
+import Data.Argonaut as A
+import Data.Either (Either(..), fromRight)
+import Data.Foreign (toForeign)
+import Data.Foreign.Class (decode, encode)
+import Data.Maybe (Maybe(Just), fromJust)
+import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
+import Partial.Unsafe (unsafePartial)
+import Simple.JSON (readImpl)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
+
 
 bigNumberSpec :: forall r . Spec r Unit
 bigNumberSpec = describe "BigNumber-spec" do
@@ -47,3 +56,15 @@ bigNumberSpec = describe "BigNumber-spec" do
         ((parseBigNumber decimal "21") >>= \x -> pure $ x - zero) `shouldEqual` parseBigNumber hexadecimal "0x15"
         (Just $ one `mul` one) `shouldEqual` parseBigNumber decimal "1"
         (Just $ one * embed (-7)) `shouldEqual` parseBigNumber hexadecimal "-0x7"
+
+      it "can handle deserialization" do
+        let bnString = "f43"
+            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (toForeign bnString)
+            d2 = unsafePartial $ fromRight $ runExcept $ decode (toForeign bnString)
+            d3 = unsafePartial $ fromRight $ A.decodeJson (A.fromString bnString)
+            d4 = unsafePartial $ fromJust $ parseBigNumber hexadecimal bnString
+        d4 `shouldEqual` d1
+        d4 `shouldEqual` d2
+        d4 `shouldEqual` d3
+        runExcept (decode (encode d1)) `shouldEqual` Right d4
+        (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d4
