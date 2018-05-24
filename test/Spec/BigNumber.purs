@@ -9,7 +9,7 @@ import Data.Either (Either(..), fromRight)
 import Data.Foreign (toForeign)
 import Data.Foreign.Class (decode, encode)
 import Data.Maybe (Maybe(Just), fromJust)
-import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
+import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber, divide)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl)
 import Test.Spec (Spec, describe, it)
@@ -47,6 +47,13 @@ bigNumberSpec = describe "BigNumber-spec" do
         Just (zero :: BigNumber) `shouldEqual` (parseBigNumber decimal "0")
         Just (embed 0 :: BigNumber) `shouldEqual` (parseBigNumber decimal "0")
         Just (embed 15 :: BigNumber) `shouldEqual` (parseBigNumber decimal "15")
+
+      it "can handle roundedDiv" do
+        divide (embed 2) (embed 1) `shouldEqual` embed 2
+        divide (embed 2) (embed 2) `shouldEqual` embed 1
+        divide (embed 2) (embed 3) `shouldEqual` embed 0
+        divide (embed 100) (embed 10) `shouldEqual` embed 10
+        divide (embed 100) (embed 3) `shouldEqual` embed 33
 
     describe "BigNumber arithmetic" do
       it "can add, subtract, and multiply BigNumbers as an Int-Alegbra" do

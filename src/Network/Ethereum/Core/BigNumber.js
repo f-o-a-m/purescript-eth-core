@@ -62,11 +62,6 @@ exports.toString = function (radix) {
   return function (bn) { return bn.toString(radix); };
 };
 
-exports.reciprical = function (bn) {
-  var one = new BigNumber(1, 10);
-  return one.div(bn);
-};
-
 exports.toTwosComplement = function (bn) {
   if (bn.ltn(0)) {
       return new BigNumber("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16).add(bn).addn(1);
@@ -101,4 +96,11 @@ var isBigNumber = function (object) {
 var isString = function (object) {
     return typeof object === 'string' ||
         (object && object.constructor && object.constructor.name === 'String');
+};
+
+exports.divide = function (n) {
+    return function (d) {
+        var newN = n.div(d);
+        return newN;
+    };
 };
