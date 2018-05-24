@@ -7,6 +7,7 @@ module Network.Ethereum.Core.BigNumber
   , toTwosComplement
   , unsafeToInt
   , floorBigNumber
+  , divide
   , module Int
   ) where
 
@@ -89,10 +90,7 @@ class (Ring r, Ring a, LeftModule a r, RightModule a r) <= Algebra a r where
 instance embedInt' :: Algebra BigNumber Int where
   embed = embedInt
 
-foreign import reciprical :: BigNumber -> BigNumber
-
-instance recipBigNumber :: DivisionRing BigNumber where
-  recip = reciprical
+foreign import divide :: BigNumber -> BigNumber -> BigNumber
 
 foreign import fromStringAsImpl
   :: (forall a . a -> Maybe a)
@@ -100,7 +98,6 @@ foreign import fromStringAsImpl
   -> Int.Radix
   -> String
   -> Maybe BigNumber
-
 
 -- | Convert a string in the given base to a `BigNumber`
 parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
