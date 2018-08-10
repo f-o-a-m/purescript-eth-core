@@ -8,7 +8,7 @@ import Data.Argonaut as A
 import Data.Either (Either(..), fromRight)
 import Data.Foreign (toForeign)
 import Data.Foreign.Class (decode, encode)
-import Data.Maybe (Maybe(Just), fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber, divide)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl)
@@ -20,6 +20,10 @@ bigNumberSpec :: forall r . Spec r Unit
 bigNumberSpec = describe "BigNumber-spec" do
 
     describe "toBigNumber tests" do
+      it "fails on invalid input" do
+       map show (parseBigNumber decimal "!@#!@#@!#!@-----bla") `shouldEqual` Nothing
+       map show (parseBigNumber decimal "-----bla") `shouldEqual` Nothing
+       map show (parseBigNumber decimal "-----20") `shouldEqual` Nothing
       it "can handle turning strings into numbers" do
        map show (parseBigNumber decimal "1")  `shouldEqual` Just  "1"
        map show (parseBigNumber hexadecimal "0x1") `shouldEqual` Just "1"

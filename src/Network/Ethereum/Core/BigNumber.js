@@ -37,22 +37,28 @@ exports.comparedTo = function (a) {
 exports.fromStringAsImpl = function (just) {
   return function (nothing) {
     return function (radix) {
+      var digits;
+      if (radix < 11) {
+        digits = "[0-" + (radix - 1).toString() + "]";
+      } else if (radix === 11) {
+        digits = "[0-9a]";
+      } else {
+        digits = "[0-9a-" + String.fromCharCode(86 + radix) + "]";
+      }
+      var pattern = new RegExp("^[\\+\\-]?" + digits + "+$", "i");
       return function (s) {
-        var result;
         try {
-            if (radix === 16) {
-              if (s.indexOf('0x') === 0 || s.indexOf('-0x') === 0) {
-                result = new BigNumber(s.replace('0x',''), 16);
-              } else {
-                result = new BigNumber(s, radix);
-              }
-            } else {
-              result = new BigNumber(s, radix);
-            }
+          if (radix === 16 && (s.indexOf('0x') === 0 || s.indexOf('-0x') === 0)) {
+            s = s.replace('0x','')
+          }
+          if (pattern.test(s)) {
+            return just(new BigNumber(s, radix))
+          } else {
+            return nothing;
+          }
         } catch (_) {
           return nothing;
         }
-        return just(result);
       };
     };
   };
