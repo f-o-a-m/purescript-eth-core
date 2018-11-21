@@ -5,7 +5,6 @@ import Prelude
 import Common (RawTransaction(..), makeTransactionMessage, mkAddress', mkHexString')
 import Data.ByteString as BS
 import Data.Maybe (Maybe(..), fromJust)
-import Data.Monoid (mempty)
 import Network.Ethereum.Core.BigNumber (embed, pow)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Network.Ethereum.Core.RLP as RLP
@@ -14,10 +13,9 @@ import Node.Encoding (Encoding(Hex, UTF8))
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.Runner (RunnerEffects)
 import Type.Quotient (mkQuotient)
 
-rlpSpec :: Spec (RunnerEffects ()) Unit
+rlpSpec :: Spec Unit
 rlpSpec = do
 
   describe "RLP Spec" $ do

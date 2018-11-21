@@ -3,16 +3,15 @@ module CoreSpec.Signatures (signatureSpec) where
 import Prelude
 
 import Common (RawTransaction(..), makeTransactionMessage, mkAddress', mkHexString', mkPrivateKey')
-import Control.Monad.Aff (Aff)
+import Effect.Aff (Aff)
 import Data.Maybe (Maybe(..))
 import Network.Ethereum.Core.BigNumber (embed)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Network.Ethereum.Core.Signatures as Sig
 import Test.Spec (Spec, it, describe)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.Runner (RunnerEffects)
 
-signatureSpec :: Spec (RunnerEffects ()) Unit
+signatureSpec :: Spec Unit
 signatureSpec = do
   describe "Testing Public / PrivateKeys" $ do
 
@@ -55,10 +54,9 @@ signatureSpec = do
 --------------------------------------------------------------------------------
 
 validatePrivatePublicPair
-  :: forall r.
-     Sig.PrivateKey
+  :: Sig.PrivateKey
   -> Sig.PublicKey
-  -> Aff r Unit
+  -> Aff Unit
 validatePrivatePublicPair private public = do
   let mpublic = Sig.mkPublicKey <<< Sig.unPublicKey $ public
   mpublic `shouldEqual` Just public

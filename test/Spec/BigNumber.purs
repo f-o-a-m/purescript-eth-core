@@ -6,8 +6,8 @@ import Prelude
 import Control.Monad.Except (runExcept)
 import Data.Argonaut as A
 import Data.Either (Either(..), fromRight)
-import Data.Foreign (toForeign)
-import Data.Foreign.Class (decode, encode)
+import Foreign (unsafeToForeign)
+import Foreign.Class (decode, encode)
 import Data.Maybe (Maybe(..), fromJust)
 import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber, divide)
 import Partial.Unsafe (unsafePartial)
@@ -16,7 +16,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 
-bigNumberSpec :: forall r . Spec r Unit
+bigNumberSpec :: Spec Unit
 bigNumberSpec = describe "BigNumber-spec" do
 
     describe "toBigNumber tests" do
@@ -70,8 +70,8 @@ bigNumberSpec = describe "BigNumber-spec" do
 
       it "can handle deserialization" do
         let bnString = "f43"
-            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (toForeign bnString)
-            d2 = unsafePartial $ fromRight $ runExcept $ decode (toForeign bnString)
+            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (unsafeToForeign bnString)
+            d2 = unsafePartial $ fromRight $ runExcept $ decode (unsafeToForeign bnString)
             d3 = unsafePartial $ fromRight $ A.decodeJson (A.fromString bnString)
             d4 = unsafePartial $ fromJust $ parseBigNumber hexadecimal bnString
         d4 `shouldEqual` d1

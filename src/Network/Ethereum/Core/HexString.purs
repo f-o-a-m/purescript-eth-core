@@ -32,13 +32,13 @@ import Data.Argonaut as A
 import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
 import Data.Either (Either(..), either)
-import Data.Foreign (ForeignError(..), fail)
-import Data.Foreign.Class (class Decode, class Encode, decode, encode)
+import Foreign (ForeignError(..), fail)
+import Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (even)
 import Data.Maybe (Maybe(..), fromJust, isJust)
-import Data.Monoid (class Monoid)
 import Data.Set (fromFoldable, member) as Set
-import Data.String (Pattern(..), split, fromCharArray, stripPrefix, toCharArray)
+import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))

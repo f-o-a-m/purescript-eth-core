@@ -10,7 +10,7 @@ import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
-keccak256Spec :: forall r . Spec r Unit
+keccak256Spec :: Spec Unit
 keccak256Spec = describe "keccak256-spec" do
     describe "Keccak256 tests" do
       it "can hash strings" do
