@@ -14,8 +14,9 @@
   },
   "devDependencies": {
     "bower": "^1.8.4",
-    "pulp": "^12.0.1",
-    "purescript": "^0.11.7"
+    "purescript-psa": "^0.6.0",
+    "purescript": "^0.12.0",
+    "pulp": "^12.2.0"
   },
   "scripts": {
     "postinstall": "bower i",

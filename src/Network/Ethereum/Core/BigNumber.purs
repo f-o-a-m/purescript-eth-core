@@ -15,11 +15,11 @@ import Prelude
 
 import Data.Argonaut as A
 import Data.Either (Either(..), either)
-import Data.Foreign (ForeignError(..), readString, fail)
-import Data.Foreign.Class (class Decode, class Encode, decode, encode)
+import Foreign (ForeignError(..), readString, fail)
+import Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
-import Data.Module (class LeftModule, class RightModule)
+import Data.Ring.Module (class LeftModule, class RightModule)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 
 --------------------------------------------------------------------------------

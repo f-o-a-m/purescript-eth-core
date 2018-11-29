@@ -6,8 +6,8 @@ import Control.Monad.Except (runExcept)
 import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Either (Either(..), fromRight)
-import Data.Foreign (toForeign)
-import Data.Foreign.Class (encode, decode)
+import Foreign (unsafeToForeign)
+import Foreign.Class (encode, decode)
 import Data.Maybe (Maybe(Just), fromJust)
 import Network.Ethereum.Core.HexString (HexString, mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
 import Node.Encoding (Encoding(Hex))
@@ -16,7 +16,7 @@ import Simple.JSON (readImpl)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
-hexSpec :: forall r . Spec r Unit
+hexSpec :: Spec Unit
 hexSpec = describe "hex-spec" do
 
     describe "bytestringFromHexString" do
@@ -59,13 +59,13 @@ hexSpec = describe "hex-spec" do
 
         let hx = (unsafePartial (fromJust <<< mkHexString) "0x6d79537472696e67")
             hxJson = A.fromString "0x6d79537472696e67"
-        (A.encodeJson <$> (A.decodeJson hxJson :: Either String HexString)) `shouldEqual` Right hxJson
+        (A.stringify <<< A.encodeJson <$> (A.decodeJson hxJson :: Either String HexString)) `shouldEqual` Right (A.stringify hxJson)
         A.decodeJson (A.encodeJson hx) `shouldEqual` Right hx
 
       it "can handle deserialization" do
         let hxString = "0f43"
-            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (toForeign hxString)
-            d2 = unsafePartial $ fromRight $ runExcept $ decode (toForeign hxString)
+            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (unsafeToForeign hxString)
+            d2 = unsafePartial $ fromRight $ runExcept $ decode (unsafeToForeign hxString)
             d3 = unsafePartial $ fromRight $ A.decodeJson (A.fromString hxString)
             d4 = unsafePartial $ fromJust $ mkHexString hxString
         d4 `shouldEqual` d1
