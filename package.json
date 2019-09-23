@@ -1,8 +1,6 @@
 {
   "name": "purescript-eth-core",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "dependencies": {
     "bn.js": "^4.11.0",
     "keccak": "^1.0.2",
@@ -16,7 +14,5 @@
   },
   "scripts": {
     "test": "pulp test"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }

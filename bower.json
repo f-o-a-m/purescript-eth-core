@@ -20,12 +20,11 @@
   "dependencies": {
     "purescript-prelude": "^4.0.0",
     "purescript-ring-modules": "^5.0.1",
-    "purescript-foreign-generic": "^7.0.0",
-    "purescript-simple-json": "^4.0.0",
+    "purescript-foreign-generic": "^10.0.0",
+    "purescript-simple-json": "^5.0.0",
     "purescript-ordered-collections": "^1.0.0",
-    "purescript-bytestrings": "^7.0.0",
-    "purescript-simple-json": "^4.0.0",
-    "purescript-argonaut": "^4.0.0"
+    "purescript-bytestrings": "safareli/purescript-bytestrings#upgrade",
+    "purescript-argonaut": "^6.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",
