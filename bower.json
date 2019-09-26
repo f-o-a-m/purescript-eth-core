@@ -24,7 +24,8 @@
     "purescript-simple-json": "^4.0.0",
     "purescript-ordered-collections": "^1.0.0",
     "purescript-bytestrings": "^7.0.0",
-    "purescript-argonaut": "^5.0.0"
+    "purescript-argonaut": "^5.0.0",
+    "purescript-parsing": "5.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",
