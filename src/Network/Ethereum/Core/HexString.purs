@@ -209,7 +209,7 @@ toAscii hx = flip BS.toString ASCII $ unsafePartial $ fromJust $ BS.fromString (
 -- | Get the 'HexString' corresponding to the UTF8 encoding.
 fromUtf8 :: String -> HexString
 fromUtf8 s = unsafePartial fromJust $
-  let s' = unsafePartial $ split (Pattern "\0000") s `unsafeIndex` 0
+  let s' = unsafePartial $ split (Pattern "\x0000") s `unsafeIndex` 0
   in BS.fromString s' UTF8 >>= (pure <<< flip BS.toString Hex) >>=  mkHexString
 
 -- | Get the 'HexString' corresponding to the ASCII encoding.
