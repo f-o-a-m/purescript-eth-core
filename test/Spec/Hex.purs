@@ -31,27 +31,27 @@ hexSpec = describe "hex-spec" do
 
       it "can convert hex strings to utf8" do
         toUtf8 (unsafePartial (fromJust <<< mkHexString) "6d79537472696e67") `shouldEqual` "myString"
-        toUtf8 (unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700") `shouldEqual` "myString\00"
+        toUtf8 (unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700") `shouldEqual` "myString\x00"
         toUtf8 (unsafePartial (fromJust <<< mkHexString) "65787065637465642076616c7565000000000000000000000000000000000000")
-          `shouldEqual` "expected value\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"
+          `shouldEqual` "expected value\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
       it "can convert strings to hex" do
         fromUtf8 "myString" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e67"
-        fromUtf8 "myString\00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e67"
-        fromUtf8 "expected value\00\00\00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "65787065637465642076616c7565"
+        fromUtf8 "myString\x00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e67"
+        fromUtf8 "expected value\x00\x00\x00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "65787065637465642076616c7565"
 
     describe "ascii tests" do
 
       it "can convert hex strings to ascii" do
 
         toAscii (unsafePartial (fromJust <<< mkHexString) "6d79537472696e67") `shouldEqual` "myString"
-        toAscii (unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700") `shouldEqual` "myString\0000"
+        toAscii (unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700") `shouldEqual` "myString\x0000"
       --  toAscii ((fromJust <<< mkHexString) "0300000035e8c6d54c5d127c9dcebe9e1a37ab9b05321128d097590a3c100000000000006521df642ff1f5ec0c3a7aa6cea6b1e7b7f7cda2cbdf07362a85088e97f19ef94331c955c0e9321ad386428c")
-      --    `shouldEqual` "\0003\0000\0000\00005èÆÕL]\0012|Î¾\001a7«\00052\0011(ÐY\n<\0010\0000\0000\0000\0000\0000\0000e!ßd/ñõì\f:z¦Î¦±ç·÷Í¢Ëß\00076*\bñùC1ÉUÀé2\001aÓB"
+      --    `shouldEqual` "\x0003\x0000\x0000\x00005èÆÕL]\x0012|Î¾\x001a7«\x00052\x0011(ÐY\n<\x0010\x0000\x0000\x0000\x0000\x0000\x0000e!ßd/ñõì\f:z¦Î¦±ç·÷Í¢Ëß\x00076*\bñùC1ÉUÀé2\x001aÓB"
 
       it "can convert asci to hex" do
         fromAscii "myString" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e67"
-        fromAscii "myString\00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700"
+        fromAscii "myString\x00" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700"
 
     describe "json tests" do
 
