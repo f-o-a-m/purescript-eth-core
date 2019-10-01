@@ -24,7 +24,8 @@
     "purescript-simple-json": "^7.0.0",
     "purescript-ordered-collections": "^1.0.0",
     "purescript-bytestrings": "safareli/purescript-bytestrings#upgrade",
-    "purescript-argonaut": "^6.0.0"
+    "purescript-argonaut": "^6.0.0",
+    "purescript-parsing": "^5.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0",
