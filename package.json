@@ -13,6 +13,7 @@
     "pulp": "^13.0.0"
   },
   "scripts": {
+    "build-strict": "pulp build -- --strict",
     "test": "pulp test"
   }
 }

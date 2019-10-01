@@ -7,6 +7,8 @@ install:
   - npm install
   - bower install --production
 script:
+  - npm run -s build-strict
+  - bower install --production
   - npm run -s test
 after_success:
 - >-
