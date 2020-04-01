@@ -8,6 +8,7 @@ module Network.Ethereum.Core.Signatures
   , Address
   , unAddress
   , mkAddress
+  , nullAddress
   , privateToPublic
   , privateToAddress
   , publicToAddress
@@ -30,7 +31,7 @@ import Foreign (ForeignError(..), fail)
 import Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Network.Ethereum.Core.HexString (HexString, dropHex, hexLength, toByteString, fromByteString)
+import Network.Ethereum.Core.HexString (HexString, takeHex, nullWord, dropHex, hexLength, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign)
@@ -133,6 +134,9 @@ unAddress (Address a) = a
 
 mkAddress :: HexString -> Maybe Address
 mkAddress hx = if hexLength hx == 40 then Just <<< Address $ hx else Nothing
+
+nullAddress :: Address
+nullAddress = Address $ takeHex 40 nullWord
 
 -- | Produce the `Address` corresponding to the `PrivateKey`.
 privateToAddress
