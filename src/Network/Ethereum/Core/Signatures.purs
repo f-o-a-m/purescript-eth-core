@@ -134,6 +134,9 @@ unAddress (Address a) = a
 mkAddress :: HexString -> Maybe Address
 mkAddress hx = if hexLength hx == 40 then Just <<< Address $ hx else Nothing
 
+nullAddress :: HexString
+nullAddress = Address $ takeHex 40 nullWord
+
 -- | Produce the `Address` corresponding to the `PrivateKey`.
 privateToAddress
   :: PrivateKey
