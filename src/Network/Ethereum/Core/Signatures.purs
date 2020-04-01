@@ -8,6 +8,7 @@ module Network.Ethereum.Core.Signatures
   , Address
   , unAddress
   , mkAddress
+  , nullAddress
   , privateToPublic
   , privateToAddress
   , publicToAddress
