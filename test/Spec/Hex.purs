@@ -3,12 +3,13 @@ module CoreSpec.Hex (hexSpec) where
 import Prelude
 
 import Control.Monad.Except (runExcept)
+import Data.Argonaut (JsonDecodeError)
 import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Either (Either(..), fromRight)
+import Data.Maybe (Maybe(Just), fromJust)
 import Foreign (unsafeToForeign)
 import Foreign.Class (encode, decode)
-import Data.Maybe (Maybe(Just), fromJust)
 import Network.Ethereum.Core.HexString (HexString, mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
@@ -59,7 +60,7 @@ hexSpec = describe "hex-spec" do
 
         let hx = (unsafePartial (fromJust <<< mkHexString) "0x6d79537472696e67")
             hxJson = A.fromString "0x6d79537472696e67"
-        (A.stringify <<< A.encodeJson <$> (A.decodeJson hxJson :: Either String HexString)) `shouldEqual` Right (A.stringify hxJson)
+        (A.stringify <<< A.encodeJson <$> (A.decodeJson hxJson :: Either JsonDecodeError HexString)) `shouldEqual` Right (A.stringify hxJson)
         A.decodeJson (A.encodeJson hx) `shouldEqual` Right hx
 
       it "can handle deserialization" do
