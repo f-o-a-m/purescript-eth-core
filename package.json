@@ -14,6 +14,6 @@
   },
   "scripts": {
     "build-strict": "spago build",
-    "test": "spago test"
+    "test": "spago -x test.dhall test"
   }
 }
