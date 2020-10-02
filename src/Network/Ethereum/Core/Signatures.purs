@@ -22,15 +22,16 @@ module Network.Ethereum.Core.Signatures
 
 import Prelude
 
+import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Either (Either(..), either)
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
 import Foreign (ForeignError(..), fail)
 import Foreign.Class (class Decode, class Encode, decode, encode)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Network.Ethereum.Core.HexString (HexString, takeHex, nullWord, dropHex, hexLength, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
@@ -118,7 +119,7 @@ instance decodeAddress :: Decode Address where
 instance decodeJsonAddress :: A.DecodeJson Address where
   decodeJson json = do
     hxString <- A.decodeJson json
-    _decode hxString
+    either (const <<< Left $ UnexpectedValue json) Right $ _decode hxString
 
 instance encodeJsonAddress :: A.EncodeJson Address where
   encodeJson = A.encodeJson <<< unAddress

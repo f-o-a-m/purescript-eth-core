@@ -13,13 +13,14 @@ module Network.Ethereum.Core.BigNumber
 
 import Prelude
 
+import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
 import Data.Either (Either(..), either)
-import Foreign (ForeignError(..), readString, fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
 import Data.Ring.Module (class LeftModule, class RightModule)
+import Foreign (ForeignError(..), readString, fail)
+import Foreign.Class (class Decode, class Encode, decode, encode)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 
 --------------------------------------------------------------------------------
@@ -143,7 +144,7 @@ instance encodeBigNumber :: Encode BigNumber where
 instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
   decodeJson json = do
     str <- A.decodeJson json
-    _decode str
+    either (const <<< Left $ UnexpectedValue json) Right $ _decode str
 
 instance encodeJsonBigNumber :: A.EncodeJson BigNumber where
   encodeJson = A.encodeJson <<< _encode

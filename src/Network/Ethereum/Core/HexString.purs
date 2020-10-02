@@ -28,18 +28,19 @@ module Network.Ethereum.Core.HexString
 
 import Prelude
 
+import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
 import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
 import Data.Either (Either(..), either)
-import Foreign (ForeignError(..), fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
 import Data.Int (even)
 import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Set (fromFoldable, member) as Set
-import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
+import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Foreign (ForeignError(..), fail)
+import Foreign.Class (class Decode, class Encode, decode, encode)
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
@@ -118,7 +119,7 @@ instance encodeHexString :: Encode HexString where
 instance decodeJsonHexString :: A.DecodeJson HexString where
   decodeJson json = do
     str <- A.decodeJson json
-    _decode str
+    either (const <<< Left $ UnexpectedValue json) Right $ _decode str
 
 instance encodeJsonHexString :: A.EncodeJson HexString where
   encodeJson = A.encodeJson <<< _encode
