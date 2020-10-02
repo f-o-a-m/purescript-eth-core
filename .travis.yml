@@ -3,13 +3,11 @@ dist: trusty
 sudo: required
 node_js: stable
 install:
-  - npm install -g bower
   - npm install
-  - bower install --production
+  - spago install
 script:
-  - npm run -s build-strict
-  - bower install
-  - npm run -s test
+  - npm run build
+  - npm run test
 after_success:
 - >-
   test $TRAVIS_TAG &&
