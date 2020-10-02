@@ -5,8 +5,8 @@ node_js: stable
 install:
   - npm install
   - spago install
+  - spago build
 script:
-  - npm run build
   - npm run test
 after_success:
 - >-
