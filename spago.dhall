@@ -12,8 +12,7 @@
   , "psci-support"
   , "ring-modules"
   , "simple-json"
-  , "spec"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+, sources = [ "src/**/*.purs"]
 }
