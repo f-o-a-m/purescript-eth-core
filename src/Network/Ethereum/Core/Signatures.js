@@ -51,3 +51,11 @@ exports.privateToPublic = function (privateKey) {
     // skip the type flag and use the X, Y points
     return Buffer.from(secp256k1.publicKeyCreate(privateKey, false).slice(1));
 };
+
+exports.generatePrivateKey = function () {
+  var prv;
+  do {
+    prv = crypto.randomBytes(32);
+  } while (!secp256k1.privateKeyVerify(prv));
+  return Buffer.from(prv);
+}
