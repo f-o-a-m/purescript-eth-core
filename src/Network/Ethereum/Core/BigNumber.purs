@@ -73,6 +73,17 @@ foreign import _subBigNumber :: BigNumber -> BigNumber -> BigNumber
 instance ringBigNumber :: Ring BigNumber where
   sub = _subBigNumber
 
+instance commutativeRingBigNumber :: CommutativeRing BigNumber
+
+foreign import _divBigNumber :: BigNumber -> BigNumber -> BigNumber
+
+foreign import _modBigNumber :: BigNumber -> BigNumber -> BigNumber
+
+instance euclidianRingBigNumber :: EuclideanRing BigNumber where
+  degree _ = 1
+  div = _divBigNumber
+  mod = _modBigNumber
+
 instance bigNumberLModule :: LeftModule BigNumber Int where
   mzeroL = embedInt 0
   maddL = add
