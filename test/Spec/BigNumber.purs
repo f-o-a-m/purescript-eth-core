@@ -68,6 +68,10 @@ bigNumberSpec = describe "BigNumber-spec" do
         (Just $ one `mul` one) `shouldEqual` parseBigNumber decimal "1"
         (Just $ one * embed (-7)) `shouldEqual` parseBigNumber hexadecimal "-0x7"
 
+      it "works like a Euclidian Ring" do
+        ((embed 20) / (embed 5) :: BigNumber) `shouldEqual` (embed 4)
+        ((embed 22) `mod` (embed 7) :: BigNumber) `shouldEqual` (embed 1)
+
       it "can handle deserialization" do
         let bnString = "f43"
             d1 = unsafePartial $ fromRight $ runExcept $ readImpl (unsafeToForeign bnString)

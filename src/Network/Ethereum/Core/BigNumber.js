@@ -28,6 +28,14 @@ exports._subBigNumber = function(n) {
     return function (m) { return n.sub(m); };
 };
 
+exports._divBigNumber = function(n) {
+  return function (m) { return n.div(m); }
+}
+
+exports._modBigNumber = function(n) {
+  return function(m) { return n.mod(m); }
+}
+
 exports.comparedTo = function (a) {
   return function (b) {
     return a.cmp(b);

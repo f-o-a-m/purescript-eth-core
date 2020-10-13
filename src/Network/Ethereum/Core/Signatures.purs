@@ -5,6 +5,7 @@ module Network.Ethereum.Core.Signatures
   , mkPublicKey
   , unPrivateKey
   , mkPrivateKey
+  , generatePrivateKey
   , Address
   , unAddress
   , mkAddress
@@ -30,6 +31,7 @@ import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
+import Effect (Effect)
 import Foreign (ForeignError(..), fail)
 import Foreign.Class (class Decode, class Encode, decode, encode)
 import Network.Ethereum.Core.HexString (HexString, takeHex, nullWord, dropHex, hexLength, toByteString, fromByteString)
@@ -97,6 +99,8 @@ foreign import privateToPublic
   :: PrivateKey
   -> PublicKey
 
+-- | Generate a valid private key using `crypto.randomBytes`
+foreign import generatePrivateKey :: Effect PrivateKey
 
 -- | Represents and Ethereum address, which is a 20 byte `HexString`
 newtype Address = Address HexString
