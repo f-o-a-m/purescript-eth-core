@@ -15,6 +15,7 @@ module Network.Ethereum.Core.Signatures
   , publicToAddress
   , Signature(..)
   , signMessage
+  , toEthSignedMessage
   , recoverSender
   , ChainId(..)
   , addChainIdOffset
@@ -38,6 +39,7 @@ import Network.Ethereum.Core.HexString (HexString, takeHex, nullWord, dropHex, h
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign)
+import Type.Quotient (mkQuotient)
 
 -- | Opaque PrivateKey type
 newtype PrivateKey = PrivateKey BS.ByteString
@@ -182,6 +184,14 @@ signMessage privateKey message =
                , s: fromByteString s
                , v
                }
+
+-- | Prefix a message with the "Ethereum Signed Message" prefix
+toEthSignedMessage :: BS.ByteString -> Maybe BS.ByteString
+toEthSignedMessage bs = do
+  let x19 = BS.singleton (mkQuotient 25) -- 0x19 == 25 dec
+  pfx <- BS.fromString "Ethereum Signed Message:\n" BS.UTF8
+  lenStr <- BS.fromString (show $ BS.length bs) BS.UTF8
+  pure $ x19 <> pfx <> lenStr <> bs
 
 foreign import ecRecover :: Fn3 BS.ByteString BS.ByteString Int PublicKey
 
