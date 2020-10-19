@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const secp256k1 = require('secp256k1');
 
 const apiVer = ((typeof secp256k1.ecdsaSign === 'function') && (typeof secp256k1.ecdsaRecover === 'function')) ? 4 : 3;
