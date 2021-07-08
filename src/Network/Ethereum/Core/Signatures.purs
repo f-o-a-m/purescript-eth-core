@@ -30,7 +30,7 @@ import Data.ByteString as BS
 import Data.Either (Either(..), either)
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
 import Effect (Effect)
 import Foreign (ForeignError(..), fail)

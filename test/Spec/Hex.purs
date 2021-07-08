@@ -6,7 +6,7 @@ import Control.Monad.Except (runExcept)
 import Data.Argonaut (JsonDecodeError)
 import Data.Argonaut as A
 import Data.ByteString as BS
-import Data.Either (Either(..), fromRight)
+import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(Just), fromJust)
 import Foreign (unsafeToForeign)
 import Foreign.Class (encode, decode)
@@ -65,9 +65,9 @@ hexSpec = describe "hex-spec" do
 
       it "can handle deserialization" do
         let hxString = "0f43"
-            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (unsafeToForeign hxString)
-            d2 = unsafePartial $ fromRight $ runExcept $ decode (unsafeToForeign hxString)
-            d3 = unsafePartial $ fromRight $ A.decodeJson (A.fromString hxString)
+            d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign hxString)
+            d2 = unsafePartial $ fromJust $ hush $ runExcept $ decode (unsafeToForeign hxString)
+            d3 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString hxString)
             d4 = unsafePartial $ fromJust $ mkHexString hxString
         d4 `shouldEqual` d1
         d4 `shouldEqual` d2

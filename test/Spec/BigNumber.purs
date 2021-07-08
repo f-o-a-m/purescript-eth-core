@@ -5,7 +5,7 @@ import Prelude
 
 import Control.Monad.Except (runExcept)
 import Data.Argonaut as A
-import Data.Either (Either(..), fromRight)
+import Data.Either (Either(..), hush)
 import Foreign (unsafeToForeign)
 import Foreign.Class (decode, encode)
 import Data.Maybe (Maybe(..), fromJust)
@@ -74,9 +74,9 @@ bigNumberSpec = describe "BigNumber-spec" do
 
       it "can handle deserialization" do
         let bnString = "f43"
-            d1 = unsafePartial $ fromRight $ runExcept $ readImpl (unsafeToForeign bnString)
-            d2 = unsafePartial $ fromRight $ runExcept $ decode (unsafeToForeign bnString)
-            d3 = unsafePartial $ fromRight $ A.decodeJson (A.fromString bnString)
+            d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign bnString)
+            d2 = unsafePartial $ fromJust $ hush $ runExcept $ decode (unsafeToForeign bnString)
+            d3 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString bnString)
             d4 = unsafePartial $ fromJust $ parseBigNumber hexadecimal bnString
         d4 `shouldEqual` d1
         d4 `shouldEqual` d2

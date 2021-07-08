@@ -93,5 +93,5 @@ rlpSpec = do
                     }
           chainId = Sig.ChainId 4
           rlpEncodingString = "f84729843b9aca0082a2c59486b89c0906b111508d5caa38e2e61689a124c86080a4d14e62b80000000000000000000000000000000000000000000000000000000000000001048080"
-          hashedMessageString = "f5bbe123594fb9f588c98b069063ce1d224917b7374c700e49ec4fce0f63f999"
+          -- hashedMessageString = "f5bbe123594fb9f588c98b069063ce1d224917b7374c700e49ec4fce0f63f999"
       BS.toString (makeTransactionMessage chainId rawTx) Hex `shouldEqual` rlpEncodingString
