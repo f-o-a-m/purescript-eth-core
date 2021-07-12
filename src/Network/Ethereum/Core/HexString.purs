@@ -201,7 +201,6 @@ padRight = padRightSigned <<< asSigned
 --   Since 'split' always returns a nonempty list, this index is actually safe.
 toUtf8 :: HexString -> String
 toUtf8 hx =
-  let hx' = unsafePartial $ split (Pattern "00") (unHex hx) `unsafeIndex` 0
   in flip BS.toString UTF8 $ bs (unHex hx)
     where
   bs :: String -> BS.ByteString
