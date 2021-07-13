@@ -54,7 +54,7 @@ makeTransactionMessage ::
      Sig.ChainId
   -> RawTransaction
   -> BS.ByteString
-makeTransactionMessage (Sig.ChainId chainId) rawTx@(RawTransaction tx) =
+makeTransactionMessage (Sig.ChainId chainId) (RawTransaction tx) =
   let txWithChainId =
         RLP.RLPArray [ RLP.RLPBigNumber tx.nonce
                      , RLP.RLPBigNumber tx.gasPrice
