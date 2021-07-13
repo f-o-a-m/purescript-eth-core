@@ -1,11 +1,8 @@
 { name = "eth-core"
 , dependencies =
-  [ "aff"
-  , "argonaut"
+  [ "argonaut"
   , "arrays"
   , "bytestrings"
-  , "console"
-  , "debug"
   , "effect"
   , "either"
   , "foreign"
@@ -23,7 +20,6 @@
   , "ring-modules"
   , "simple-json"
   , "strings"
-  , "transformers"
   , "unsafe-coerce"
   ]
 , packages = ./packages.dhall
