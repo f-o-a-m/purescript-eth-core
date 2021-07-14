@@ -4,7 +4,7 @@ import Prelude
 
 import Data.ByteString as BS
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), maybe)
 import Network.Ethereum.Core.BigNumber (BigNumber)
 import Network.Ethereum.Core.HexString as Hex
@@ -54,7 +54,7 @@ makeTransactionMessage ::
      Sig.ChainId
   -> RawTransaction
   -> BS.ByteString
-makeTransactionMessage (Sig.ChainId chainId) rawTx@(RawTransaction tx) =
+makeTransactionMessage (Sig.ChainId chainId) (RawTransaction tx) =
   let txWithChainId =
         RLP.RLPArray [ RLP.RLPBigNumber tx.nonce
                      , RLP.RLPBigNumber tx.gasPrice
