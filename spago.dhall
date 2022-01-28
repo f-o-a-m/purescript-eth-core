@@ -12,7 +12,6 @@
   , "maybe"
   , "node-buffer"
   , "ordered-collections"
-  , "parsing"
   , "partial"
   , "prelude"
   , "psci-support"
