@@ -4,10 +4,11 @@ module Network.Ethereum.Core.BigNumber
   , pow
   , toString
   , parseBigNumber
-  , toTwosComplement
   , unsafeToInt
   , floorBigNumber
   , divide
+  , bigNumberToTwosComplementInt256
+  , twosComplementInt256ToBigNumber
   , module Int
   ) where
 
@@ -33,6 +34,7 @@ foreign import data BigNumber :: Type
 -- | Convert a Big number into a string in the given base
 foreign import toString :: Int.Radix -> BigNumber -> String
 
+-- TODO(srghma): remove instance names in libs
 instance showBigNumber :: Show BigNumber where
   show = toString Int.decimal
 
@@ -115,24 +117,31 @@ foreign import fromStringAsImpl
 parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
 parseBigNumber = fromStringAsImpl Just Nothing
 
--- | Take the twos complement of a `BigNumer`
-foreign import toTwosComplement :: BigNumber -> BigNumber
-
 -- | Exponentiate a `BigNumber`
 foreign import pow :: BigNumber -> Int -> BigNumber
 
+-- Can throw error "Error: Number can only safely store up to 53 bits"
+-- TODO(srghma): rename to unsafeToInt (because of https://github.com/throughnothing/purescript-bignum/blob/b9cffc4aa8a5d3e4b688ae34d4ccb01b701e1586/src/Data/BigNum.purs#L28)
 foreign import toNumber :: BigNumber -> Number
+
 
 -- | Unsafely coerce a BigNumber to an Int.
 unsafeToInt :: BigNumber -> Int
-unsafeToInt = Int.floor <<< toNumber
+unsafeToInt = Int.floor <<< toNumber -- TODO(srghma): why floor is needed, BigNumber already cannot be floating number
 
 -- | Take the integer part of a big number
 foreign import floorBigNumber :: BigNumber -> BigNumber
 
+-- | Take the twos complement of a `BigNumber`
+foreign import bigNumberToTwosComplementInt256 :: BigNumber -> BigNumber
+
+-- | Take the twos complement of a `BigNumber`
+foreign import twosComplementInt256ToBigNumber :: BigNumber -> BigNumber
+
 _encode :: BigNumber -> String
 _encode = (append "0x") <<< toString Int.hexadecimal
 
+-- Only accepts values with 0x prepended
 _decode :: String -> Either String BigNumber
 _decode str = case parseBigNumber Int.hexadecimal str of
   Nothing -> Left $ "Failed to parse as BigNumber: " <> str
@@ -149,6 +158,7 @@ instance readFBigNumber :: ReadForeign BigNumber where
 instance writeFBigNumber :: WriteForeign BigNumber where
   writeImpl = encode
 
+-- `new BN('deed')` to `0xdeed`
 instance encodeBigNumber :: Encode BigNumber where
   encode = encode <<< _encode
 

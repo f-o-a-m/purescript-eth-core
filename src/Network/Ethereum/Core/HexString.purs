@@ -34,14 +34,14 @@ import Data.Array (uncons, unsafeIndex, replicate)
 import Data.ByteString (ByteString, toString, fromString) as BS
 import Data.Either (Either(..), either)
 import Data.Int (even)
-import Data.Maybe (Maybe(..), fromJust, isJust)
+import Data.Maybe (Maybe(..), fromJust, isJust, fromMaybe)
 import Data.Set (fromFoldable, member) as Set
 import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Foreign (ForeignError(..), fail)
 import Foreign.Class (class Decode, class Encode, decode, encode)
-import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
+import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal, twosComplementInt256ToBigNumber)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign)
@@ -124,25 +124,40 @@ instance encodeJsonHexString :: A.EncodeJson HexString where
 unHex :: HexString -> String
 unHex (HexString hx) = hx
 
+-- | "00" -> Just "00"
+-- | "0x00" -> Just "00"
+-- | "ff" -> Just "ff"
+-- | "-ff" -> Nothing
+-- | "0xff" -> Just "ff"
+-- | "0xFF" -> Just "ff"
+-- | "" -> Just ""
+-- | "0x" -> Just ""
+-- | "f" -> Nothing
+-- | "0xf" -> Nothing
 mkHexString :: String -> Maybe HexString
-mkHexString str | S.length str `mod` 2 /= 0 = Nothing
-                | otherwise =
-    HexString <$>
-      case stripPrefix (Pattern "0x") str of
-        Nothing -> if isJust (go <<< toCharArray $ str)
-                    then Just $ S.toLower str
-                    else Nothing
-        Just res -> if isJust (go <<< toCharArray $ res)
-                      then Just $ S.toLower res
-                      else Nothing
-      where
-        hexAlph = Set.fromFoldable <<< toCharArray $ "0123456789abcdefABCDEF"
-        go s = case uncons s of
-          Nothing -> pure unit
-          Just {head, tail} ->
-            if head `Set.member` hexAlph
-              then go tail
-              else Nothing
+mkHexString =
+  let
+    hexAlphhabet = Set.fromFoldable <<< toCharArray $ "0123456789abcdefABCDEF"
+
+    go :: Array Char -> Maybe Unit
+    go s = case uncons s of
+      Nothing -> pure unit
+      Just {head, tail} ->
+        if head `Set.member` hexAlphhabet
+          then go tail
+          else Nothing
+
+    goString :: String -> Maybe String
+    goString str = if isJust (go <<< toCharArray $ str)
+      then Just $ S.toLower str
+      else Nothing
+  in \str ->
+  let
+    str' = fromMaybe str $ stripPrefix (Pattern "0x") str
+    length = S.length str'
+  in if length `mod` 2 /= 0
+    then Nothing
+    else HexString <$> goString str'
 
 -- | Compute the length of the hex string, which is twice the number of bytes it represents
 hexLength :: HexString -> Int
@@ -154,6 +169,7 @@ takeHex n (HexString hx) = HexString $ S.take n hx
 dropHex :: Int -> HexString -> HexString
 dropHex n (HexString hx) = HexString $ S.drop n hx
 
+-- 64 characters/hexes, 32 byte value, 256 bit
 nullWord :: HexString
 nullWord = HexString "0000000000000000000000000000000000000000000000000000000000000000"
 
@@ -162,27 +178,28 @@ nullWord = HexString "0000000000000000000000000000000000000000000000000000000000
 -- | Utils
 --------------------------------------------------------------------------------
 
--- | Computes the number of 0s needed to pad a bytestring of the input length
+-- | Computes the number of 0s needed to pad a bytestring of the input length,
+-- | such that the length is 32 bytes (or 64 characters/hexes, 256 bit).
+-- | For example used to encode function arguments.
 getPadLength :: Int -> Int
 getPadLength len =
   let n = len `mod` 64
   in if n == 0 then 0 else 64 - n
 
+getPadding :: Sign -> HexString -> HexString
+getPadding s hx =
+    let padLength = getPadLength $ hexLength hx
+        sgn = if s `eq` Pos then '0' else 'f'
+        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
+    in padding
+
 -- | Pad a `Signed HexString` on the left until it has length == 0 mod 64.
 padLeftSigned :: Signed HexString -> HexString
-padLeftSigned (Signed s hx) =
-    let padLength = getPadLength $ hexLength hx
-        sgn = if s `eq` Pos then '0' else 'f'
-        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
-    in padding <> hx
+padLeftSigned (Signed s hx) = getPadding s hx <> hx
 
--- | Pad a `Signed HexString` on the right until it has length 0 mod 64.
+-- | Pad a `Signed HexString` on the right until it has length == 0 mod 64.
 padRightSigned :: Signed HexString -> HexString
-padRightSigned (Signed s hx) =
-    let padLength = getPadLength $ hexLength hx
-        sgn = if s `eq` Pos then '0' else 'f'
-        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
-    in hx <> padding
+padRightSigned (Signed s hx) = hx <> getPadding s hx
 
 -- | Pad a `HexString` on the left with '0's until it has length == 0 mod 64.
 padLeft :: HexString -> HexString
@@ -220,9 +237,9 @@ fromAscii s = unsafePartial fromJust $
 toSignedHexString :: BigNumber -> Signed HexString
 toSignedHexString bn =
   let rawStr = toString hexadecimal $ bn
-      str = unsafePartial fromJust <<< mkHexString $ if even (S.length rawStr) then rawStr else "0" <> rawStr
+      evenStr = unsafePartial fromJust <<< mkHexString $ if even (S.length rawStr) then rawStr else "0" <> rawStr
       sgn = if bn < zero then Neg else Pos
-  in Signed sgn str
+  in Signed sgn evenStr
 
 toHexString :: BigNumber -> HexString
 toHexString bn =
@@ -231,7 +248,10 @@ toHexString bn =
 
 foreign import toBigNumber :: HexString -> BigNumber
 
-foreign import toBigNumberFromSignedHexString :: HexString -> BigNumber
+-- by "signed" we mean NOT that "f0f0f0f0f" can be prepended by minus ('-')
+-- but that it can be prepended by zeros (`00000....data`) or ones (`ffffff...data`)
+toBigNumberFromSignedHexString :: HexString -> BigNumber
+toBigNumberFromSignedHexString = twosComplementInt256ToBigNumber <<< toBigNumber
 
 toByteString :: HexString -> BS.ByteString
 toByteString hx = unsafePartial fromJust (BS.fromString (unHex hx) Hex)
