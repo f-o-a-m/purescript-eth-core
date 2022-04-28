@@ -45,7 +45,6 @@ import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign)
-import Text.Parsing.Parser.String (class StringLike)
 
 --------------------------------------------------------------------------------
 -- * Signed Values
@@ -57,13 +56,6 @@ derive instance eqSign :: Eq Sign
 
 -- | Represents values that can be either positive or negative.
 data Signed a = Signed Sign a
-
-instance showSigned :: Show a => Show (Signed a) where
-  show (Signed s a) = s' <> show a
-    where
-      s' = case s of
-        Pos -> ""
-        Neg -> "-"
 
 instance eqSigned :: Eq a => Eq (Signed a) where
   eq (Signed s a) (Signed s' a') = (s `eq` s') && (a `eq` a')
@@ -82,7 +74,9 @@ asSigned a = Signed Pos a
 -- | Represents a base16, utf8 encoded bytestring
 newtype HexString = HexString String
 
-derive newtype instance showHexString :: Show HexString
+instance showHexString :: Show HexString where
+  show (HexString s) = "0x" <> s 
+
 derive newtype instance hexStringEq :: Eq HexString
 derive newtype instance hexStringOrd :: Ord HexString
 derive newtype instance semigpStringEq :: Semigroup HexString
