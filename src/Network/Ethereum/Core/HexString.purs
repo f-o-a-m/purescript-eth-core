@@ -5,9 +5,9 @@ module Network.Ethereum.Core.HexString
   , asSigned
   , mkHexString
   , unHex
-  , hexLength
-  , dropHex
-  , takeHex
+  , numberOfBytes
+  , dropBytes
+  , takeBytes
   , nullWord
   , getPadLength
   , padLeftSigned
@@ -82,17 +82,11 @@ asSigned a = Signed Pos a
 -- | Represents a base16, utf8 encoded bytestring
 newtype HexString = HexString String
 
-instance showHexString :: Show HexString where
-  show (HexString hx) = "0x" <> hx
-
-instance hexStringEq :: Eq HexString where
-  eq (HexString h1) (HexString h2) = S.toLower h1 == S.toLower h2
-
+derive newtype instance showHexString :: Show HexString
+derive newtype instance hexStringEq :: Eq HexString
 derive newtype instance hexStringOrd :: Ord HexString
 derive newtype instance semigpStringEq :: Semigroup HexString
 derive newtype instance monoidStringEq :: Monoid HexString
-
-derive newtype instance stringLikeHexString :: StringLike HexString
 
 _encode :: HexString -> String
 _encode = append "0x" <<< unHex
@@ -147,15 +141,14 @@ mkHexString str | S.length str `mod` 2 /= 0 = Nothing
               then go tail
               else Nothing
 
--- | Compute the length of the hex string, which is twice the number of bytes it represents
-hexLength :: HexString -> Int
-hexLength (HexString hx) = S.length hx
+numberOfBytes :: HexString -> Int
+numberOfBytes (HexString hx) = S.length hx `div` 2
 
-takeHex :: Int -> HexString -> HexString
-takeHex n (HexString hx) = HexString $ S.take n hx
+takeBytes :: Int -> HexString -> HexString
+takeBytes n (HexString hx) = HexString $ S.take (2 * n) hx
 
-dropHex :: Int -> HexString -> HexString
-dropHex n (HexString hx) = HexString $ S.drop n hx
+dropBytes :: Int -> HexString -> HexString
+dropBytes n (HexString hx) = HexString $ S.drop (2 * n) hx
 
 nullWord :: HexString
 nullWord = HexString "0000000000000000000000000000000000000000000000000000000000000000"
@@ -168,23 +161,23 @@ nullWord = HexString "0000000000000000000000000000000000000000000000000000000000
 -- | Computes the number of 0s needed to pad a bytestring of the input length
 getPadLength :: Int -> Int
 getPadLength len =
-  let n = len `mod` 64
-  in if n == 0 then 0 else 64 - n
+  let n = len `mod` 32
+  in if n == 0 then 0 else 32 - n
 
 -- | Pad a `Signed HexString` on the left until it has length == 0 mod 64.
 padLeftSigned :: Signed HexString -> HexString
 padLeftSigned (Signed s hx) =
-    let padLength = getPadLength $ hexLength hx
+    let padLength = getPadLength $ numberOfBytes hx
         sgn = if s `eq` Pos then '0' else 'f'
-        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
+        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate (2 * padLength) $ sgn
     in padding <> hx
 
 -- | Pad a `Signed HexString` on the right until it has length 0 mod 64.
 padRightSigned :: Signed HexString -> HexString
 padRightSigned (Signed s hx) =
-    let padLength = getPadLength $ hexLength hx
+    let padLength = getPadLength $ numberOfBytes hx
         sgn = if s `eq` Pos then '0' else 'f'
-        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate padLength $ sgn
+        padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate (2 * padLength) $ sgn
     in hx <> padding
 
 -- | Pad a `HexString` on the left with '0's until it has length == 0 mod 64.

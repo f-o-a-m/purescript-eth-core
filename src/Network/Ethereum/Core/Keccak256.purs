@@ -8,7 +8,7 @@ import Prelude
 
 import Data.ByteString (ByteString, fromString)
 import Data.Maybe (fromJust)
-import Network.Ethereum.Core.HexString (HexString, fromByteString, takeHex, toByteString)
+import Network.Ethereum.Core.HexString (HexString, fromByteString, takeBytes, toByteString)
 import Node.Encoding (Encoding(UTF8))
 import Partial.Unsafe (unsafePartial)
 
@@ -32,4 +32,4 @@ instance keccak256HexString :: Keccak256 HexString where
 
 -- | convert a string representing a type signature into a selector
 toSelector :: String -> HexString
-toSelector = takeHex 8 <<< fromByteString <<< keccak256
+toSelector = takeBytes 4 <<< fromByteString <<< keccak256
