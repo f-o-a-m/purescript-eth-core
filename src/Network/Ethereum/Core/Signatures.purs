@@ -35,7 +35,7 @@ import Data.Maybe (Maybe(..), fromJust)
 import Effect (Effect)
 import Foreign (ForeignError(..), fail)
 import Foreign.Class (class Decode, class Encode, decode, encode)
-import Network.Ethereum.Core.HexString (HexString, takeHex, nullWord, dropHex, hexLength, toByteString, fromByteString)
+import Network.Ethereum.Core.HexString (HexString, takeBytes, nullWord, dropBytes, numberOfBytes, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign)
@@ -140,10 +140,10 @@ unAddress :: Address -> HexString
 unAddress (Address a) = a
 
 mkAddress :: HexString -> Maybe Address
-mkAddress hx = if hexLength hx == 40 then Just <<< Address $ hx else Nothing
+mkAddress hx = if numberOfBytes hx == 20 then Just <<< Address $ hx else Nothing
 
 nullAddress :: Address
-nullAddress = Address $ takeHex 40 nullWord
+nullAddress = Address $ takeBytes 20 nullWord
 
 -- | Produce the `Address` corresponding to the `PrivateKey`.
 privateToAddress
@@ -157,7 +157,7 @@ publicToAddress
   -> Address
 publicToAddress (PublicKey publicKey) =
   let addrHex = fromByteString $ keccak256 publicKey
-  in unsafePartial fromJust <<< mkAddress $ dropHex 24 addrHex
+  in unsafePartial fromJust <<< mkAddress $ dropBytes 12 addrHex
 
 newtype Signature =
   Signature { r :: HexString
