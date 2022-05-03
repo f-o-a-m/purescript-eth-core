@@ -13,10 +13,11 @@ import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (runSpec)
 
 main :: Effect Unit
-main = launchAff_ $ 
-  runSpec [consoleReporter] $ do
-    keccak256Spec
-    hexSpec
-    bigNumberSpec
-    rlpSpec
-    signatureSpec
+main = launchAff_
+  $ runSpec [ consoleReporter ]
+  $ do
+      keccak256Spec
+      hexSpec
+      bigNumberSpec
+      rlpSpec
+      signatureSpec

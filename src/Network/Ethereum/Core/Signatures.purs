@@ -76,10 +76,11 @@ mkPublicKey
   :: HexString
   -> Maybe PublicKey
 mkPublicKey publicKey =
-  let publicKeyBS = toByteString publicKey
-  in if isValidPublic publicKeyBS
-       then Just $ PublicKey publicKeyBS
-       else Nothing
+  let
+    publicKeyBS = toByteString publicKey
+  in
+    if isValidPublic publicKeyBS then Just $ PublicKey publicKeyBS
+    else Nothing
 
 -- | Get the underlying `HexString` representation of a PrivateKey
 unPrivateKey
@@ -91,10 +92,11 @@ mkPrivateKey
   :: HexString
   -> Maybe PrivateKey
 mkPrivateKey privateKey =
-  let privateKeyBS = toByteString privateKey
-  in if isValidPrivate privateKeyBS
-       then Just $ PrivateKey privateKeyBS
-       else Nothing
+  let
+    privateKeyBS = toByteString privateKey
+  in
+    if isValidPrivate privateKeyBS then Just $ PrivateKey privateKeyBS
+    else Nothing
 
 -- | Produce the `PublicKey` for the corresponding `PrivateKey`.
 foreign import privateToPublic
@@ -156,14 +158,17 @@ publicToAddress
   :: PublicKey
   -> Address
 publicToAddress (PublicKey publicKey) =
-  let addrHex = fromByteString $ keccak256 publicKey
-  in unsafePartial fromJust <<< mkAddress $ dropBytes 12 addrHex
+  let
+    addrHex = fromByteString $ keccak256 publicKey
+  in
+    unsafePartial fromJust <<< mkAddress $ dropBytes 12 addrHex
 
 newtype Signature =
-  Signature { r :: HexString
-            , s :: HexString
-            , v :: Int
-            }
+  Signature
+    { r :: HexString
+    , s :: HexString
+    , v :: Int
+    }
 
 derive instance genericSignature :: Generic Signature _
 derive instance eqSignature :: Eq Signature
@@ -171,7 +176,7 @@ derive instance eqSignature :: Eq Signature
 instance showSignature :: Show Signature where
   show = genericShow
 
-foreign import ecSign :: Fn2 PrivateKey BS.ByteString {r :: BS.ByteString, s :: BS.ByteString, v :: Int}
+foreign import ecSign :: Fn2 PrivateKey BS.ByteString { r :: BS.ByteString, s :: BS.ByteString, v :: Int }
 
 -- | Sign the message with a `PrivateKey`
 signMessage
@@ -179,11 +184,14 @@ signMessage
   -> BS.ByteString
   -> Signature
 signMessage privateKey message =
-  let {r,s,v} = runFn2 ecSign privateKey message
-  in Signature { r: fromByteString r
-               , s: fromByteString s
-               , v
-               }
+  let
+    { r, s, v } = runFn2 ecSign privateKey message
+  in
+    Signature
+      { r: fromByteString r
+      , s: fromByteString s
+      , v
+      }
 
 -- | Prefix a message with the "Ethereum Signed Message" prefix
 toEthSignedMessage :: BS.ByteString -> Maybe BS.ByteString
@@ -200,7 +208,7 @@ recoverSender
   :: BS.ByteString
   -> Signature
   -> PublicKey
-recoverSender messageHash (Signature {v,r,s}) =
+recoverSender messageHash (Signature { v, r, s }) =
   runFn3 ecRecover messageHash (toByteString r <> toByteString s) v
 
 -- | Used in Ethereum to prevent replay attacks
@@ -217,11 +225,11 @@ addChainIdOffset
   :: ChainId
   -> Signature
   -> Signature
-addChainIdOffset (ChainId cId) (Signature sig) = Signature sig {v = sig.v + 35 + 2 * cId}
+addChainIdOffset (ChainId cId) (Signature sig) = Signature sig { v = sig.v + 35 + 2 * cId }
 
 -- | Remove the ChainId offset from the `Signature` `v` parameter.
 removeChainIdOffset
   :: ChainId
   -> Signature
   -> Signature
-removeChainIdOffset (ChainId cId) (Signature sig) = Signature sig {v = sig.v - 35 - 2 * cId}
+removeChainIdOffset (ChainId cId) (Signature sig) = Signature sig { v = sig.v - 35 - 2 * cId }

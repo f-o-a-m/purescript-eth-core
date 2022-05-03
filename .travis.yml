@@ -8,6 +8,7 @@ install:
   - spago build
 script:
   - npm run test
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run tidy-check; fi
 after_success:
 - >-
   test $TRAVIS_TAG &&
