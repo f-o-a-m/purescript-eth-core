@@ -14,8 +14,8 @@ import Unsafe.Coerce (unsafeCoerce)
 class RLPEncode a where
   rlpEncode :: a -> ByteString
 
-data RLPObject =
-    RLPNull
+data RLPObject
+  = RLPNull
   | RLPString String
   | RLPHexString HexString
   | RLPAddress Address
@@ -32,17 +32,17 @@ transRLP
   :: RLPObject
   -> RLPVal
 transRLP obj = case obj of
-    RLPNull -> _rlpNull
-    RLPString s -> mkRLPVal s
-    RLPInt n -> mkRLPVal n
-    RLPHexString hx -> mkRLPVal $ "0x" <> (unHex hx)
-    RLPAddress addr -> transRLP <<< RLPHexString $ unAddress addr
-    RLPBigNumber bn -> mkRLPVal bn
-    RLPByteString bs -> mkRLPVal bs
-    RLPArray as -> mkRLPVal $ map transRLP as
+  RLPNull -> _rlpNull
+  RLPString s -> mkRLPVal s
+  RLPInt n -> mkRLPVal n
+  RLPHexString hx -> mkRLPVal $ "0x" <> (unHex hx)
+  RLPAddress addr -> transRLP <<< RLPHexString $ unAddress addr
+  RLPBigNumber bn -> mkRLPVal bn
+  RLPByteString bs -> mkRLPVal bs
+  RLPArray as -> mkRLPVal $ map transRLP as
   where
-    mkRLPVal :: forall a. a -> RLPVal
-    mkRLPVal = unsafeCoerce
+  mkRLPVal :: forall a. a -> RLPVal
+  mkRLPVal = unsafeCoerce
 
 foreign import _rlpEncode :: RLPVal -> ByteString
 

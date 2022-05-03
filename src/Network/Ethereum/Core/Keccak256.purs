@@ -25,7 +25,7 @@ instance keccak256ByteString :: Keccak256 ByteString where
   keccak256 = _keccak256
 
 instance keccak256String :: Keccak256 String where
-  keccak256 =  keccak256 <<< unsafePartial fromJust <<< flip fromString UTF8
+  keccak256 = keccak256 <<< unsafePartial fromJust <<< flip fromString UTF8
 
 instance keccak256HexString :: Keccak256 HexString where
   keccak256 = keccak256 <<< toByteString

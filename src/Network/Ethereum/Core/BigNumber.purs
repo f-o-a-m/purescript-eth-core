@@ -1,6 +1,7 @@
 module Network.Ethereum.Core.BigNumber
   ( BigNumber
-  , class Algebra, embed
+  , class Algebra
+  , embed
   , pow
   , toString
   , parseBigNumber
@@ -45,11 +46,13 @@ foreign import comparedTo :: BigNumber -> BigNumber -> Int
 
 instance ordBigNumber :: Ord BigNumber where
   compare bn1 bn2 =
-    let n = comparedTo bn1 bn2
-    in case n of
-         0 -> EQ
-         1 -> GT
-         _ -> LT
+    let
+      n = comparedTo bn1 bn2
+    in
+      case n of
+        0 -> EQ
+        1 -> GT
+        _ -> LT
 
 foreign import _addBigNumber :: BigNumber -> BigNumber -> BigNumber
 
@@ -105,8 +108,8 @@ instance embedInt' :: Algebra BigNumber Int where
 foreign import divide :: BigNumber -> BigNumber -> BigNumber
 
 foreign import fromStringAsImpl
-  :: (forall a . a -> Maybe a)
-  -> (forall a . Maybe a)
+  :: (forall a. a -> Maybe a)
+  -> (forall a. Maybe a)
   -> Int.Radix
   -> String
   -> Maybe BigNumber
