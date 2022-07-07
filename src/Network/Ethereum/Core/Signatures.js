@@ -1,5 +1,5 @@
-const crypto = require('crypto');
-const secp256k1 = require('secp256k1');
+import * as crypto from 'crypto';
+import {default as secp256k1} from 'secp256k1';
 
 const apiVer = ((typeof secp256k1.ecdsaSign === 'function') && (typeof secp256k1.ecdsaRecover === 'function')) ? 4 : 3;
 
@@ -11,7 +11,7 @@ if (signFn === undefined || recoverFn === undefined) {
 }
 
 // copied from ethereumjs-util
-exports.isValidPublic = function (publicKey) {
+export function isValidPublic (publicKey) {
     if (publicKey.length === 64) {
         // Convert to SEC1 for secp256k1
         return secp256k1.publicKeyVerify(Buffer.concat([Buffer.from([4]), publicKey]));
@@ -21,12 +21,12 @@ exports.isValidPublic = function (publicKey) {
 };
 
 // copied from ethereumjs-util
-exports.isValidPrivate = function (privateKey) {
+export function isValidPrivate (privateKey) {
     return secp256k1.privateKeyVerify(privateKey);
 };
 
 // copied from ethereumjs-util, but more flexible with chainId
-exports.ecSign = function (privateKey, msgHash) {
+export function ecSign (privateKey, msgHash) {
     var sig = signFn(msgHash, privateKey);
     var ret = {};
     ret.r = Buffer.from(sig.signature.slice(0, 32));
@@ -42,18 +42,18 @@ exports.ecSign = function (privateKey, msgHash) {
 };
 
 // copied from ethereumjs-util, but more flexible with chainId
-exports.ecRecover = function (msgHash, signature, v) {
+export function ecRecover (msgHash, signature, v) {
     var senderPubKey = recoverFn(msgHash, signature, v);
     return Buffer.from(secp256k1.publicKeyConvert(senderPubKey, false).slice(1));
 };
 
 // copied from ethereumjs-util
-exports.privateToPublic = function (privateKey) {
+export function privateToPublic (privateKey) {
     // skip the type flag and use the X, Y points
     return Buffer.from(secp256k1.publicKeyCreate(privateKey, false).slice(1));
 };
 
-exports.generatePrivateKey = function () {
+export function generatePrivateKey () {
   var prv;
   do {
     prv = crypto.randomBytes(32);

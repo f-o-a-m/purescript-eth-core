@@ -1,48 +1,47 @@
-"use strict";
-var BigNumber = require('bn.js');
+import BigNumber from 'bn.js';
 
 //NOTE: According to the documentation, many binary operators can take a normal js Number
 //by suffixing the version for BN with 'n'.
 
-exports._intToBigNumber = function(value) {
+export function _intToBigNumber (value) {
   return new BigNumber(value.toString(10), 10);
-};
+}
 
-exports._numberToBigNumber = function(value) {
+export function _numberToBigNumber (value) {
     return new BigNumber(value);
 };
 
-exports._eqBigNumber = function(n) {
+export function _eqBigNumber (n) {
     return function(m) { return m.eq(n); };
 };
 
-exports._addBigNumber = function(n) {
+export function _addBigNumber (n) {
     return function (m) { return n.add(m); };
 };
 
-exports._mulBigNumber = function(n) {
+export function _mulBigNumber (n) {
     return function (m) { return n.mul(m); };
 };
 
-exports._subBigNumber = function(n) {
+export function _subBigNumber (n) {
     return function (m) { return n.sub(m); };
 };
 
-exports._divBigNumber = function(n) {
+export function _divBigNumber (n) {
   return function (m) { return n.div(m); }
 }
 
-exports._modBigNumber = function(n) {
+export function _modBigNumber (n) {
   return function(m) { return n.mod(m); }
 }
 
-exports.comparedTo = function (a) {
+export function comparedTo (a) {
   return function (b) {
     return a.cmp(b);
   };
 };
 
-exports.fromStringAsImpl = function (just) {
+export function fromStringAsImpl (just) {
   return function (nothing) {
     return function (radix) {
       var digits;
@@ -72,11 +71,11 @@ exports.fromStringAsImpl = function (just) {
   };
 };
 
-exports.toString = function (radix) {
+export function toString (radix) {
   return function (bn) { return bn.toString(radix); };
 };
 
-exports.toTwosComplement = function (bn) {
+export function toTwosComplement (bn) {
   if (bn.ltn(0)) {
       return new BigNumber("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16).add(bn).addn(1);
   } else {
@@ -84,35 +83,25 @@ exports.toTwosComplement = function (bn) {
   }
 };
 
-exports.floorBigNumber = function(bn) {
+export function floorBigNumber (bn) {
     var bnStr = bn.toString(10);
     var newBn = new BigNumber(bnStr, 10);
     return newBn;
 };
 
-exports.pow = function(n) {
+export function pow (n) {
     return function (m) {
         var exp = new BigNumber(m, 10);
         return n.pow(exp);
     };
 };
 
-exports.toNumber = function (n) {
+export function toNumber (n) {
     var newN = new BigNumber(n);
     return newN.toNumber();
 };
 
-var isBigNumber = function (object) {
-    return object instanceof BigNumber ||
-        (object && object.constructor && object.constructor.name === 'BigNumber');
-};
-
-var isString = function (object) {
-    return typeof object === 'string' ||
-        (object && object.constructor && object.constructor.name === 'String');
-};
-
-exports.divide = function (n) {
+export function divide (n) {
     return function (d) {
         var newN = n.div(d);
         return newN;
