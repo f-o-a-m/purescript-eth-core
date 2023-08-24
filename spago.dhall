@@ -6,7 +6,6 @@
   , "effect"
   , "either"
   , "foreign"
-  , "foreign-generic"
   , "functions"
   , "integers"
   , "maybe"
