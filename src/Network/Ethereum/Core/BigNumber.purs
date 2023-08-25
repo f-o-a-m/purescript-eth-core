@@ -21,8 +21,7 @@ import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
 import Data.Ring.Module (class LeftModule, class RightModule)
 import Foreign (ForeignError(..), readString, fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
@@ -141,19 +140,13 @@ _decode str = case parseBigNumber Int.hexadecimal str of
   Nothing -> Left $ "Failed to parse as BigNumber: " <> str
   Just n -> Right n
 
-instance decodeBigNumber :: Decode BigNumber where
-  decode x = do
+instance readFBigNumber :: ReadForeign BigNumber where
+  readImpl x = do
     str <- readString x
     either (fail <<< ForeignError) pure $ _decode str
 
-instance readFBigNumber :: ReadForeign BigNumber where
-  readImpl = decode
-
 instance writeFBigNumber :: WriteForeign BigNumber where
-  writeImpl = encode
-
-instance encodeBigNumber :: Encode BigNumber where
-  encode = encode <<< _encode
+  writeImpl = writeImpl <<< _encode
 
 instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
   decodeJson json = do

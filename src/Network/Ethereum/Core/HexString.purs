@@ -40,11 +40,10 @@ import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Foreign (ForeignError(..), fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 --------------------------------------------------------------------------------
 -- * Signed Values
@@ -90,19 +89,13 @@ _decode str = case mkHexString str of
   Just res -> Right res
   Nothing -> Left $ "Failed to parse as HexString: " <> str
 
-instance decodeHexString :: Decode HexString where
-  decode s = do
-    str <- decode s
+instance readFHexString :: ReadForeign HexString where
+  readImpl f = do
+    str <- readImpl f
     either (fail <<< ForeignError) pure $ _decode str
 
-instance readFHexString :: ReadForeign HexString where
-  readImpl = decode
-
 instance writeFHexString :: WriteForeign HexString where
-  writeImpl = encode
-
-instance encodeHexString :: Encode HexString where
-  encode = encode <<< _encode
+  writeImpl = writeImpl <<< _encode
 
 instance decodeJsonHexString :: A.DecodeJson HexString where
   decodeJson json = do

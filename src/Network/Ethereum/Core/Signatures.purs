@@ -34,11 +34,11 @@ import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
 import Effect (Effect)
 import Foreign (ForeignError(..), fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
+-- import Foreign.Class (class Decode, class Encode, decode, encode)
 import Network.Ethereum.Core.HexString (HexString, takeBytes, nullWord, dropBytes, numberOfBytes, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 import Type.Quotient (mkQuotient)
 
 -- | Opaque PrivateKey type
@@ -112,17 +112,20 @@ newtype Address = Address HexString
 derive newtype instance addressShow :: Show Address
 derive newtype instance addressEq :: Eq Address
 derive newtype instance addressOrd :: Ord Address
-derive newtype instance encodeAddress :: Encode Address
 
 _decode :: HexString -> Either String Address
 _decode hx = case mkAddress hx of
   Nothing -> Left $ "Address must be 20 bytes long: " <> show hx
   Just res -> Right res
 
-instance decodeAddress :: Decode Address where
-  decode a = do
-    hxString <- decode a
-    either (fail <<< ForeignError) pure $ _decode hxString
+
+instance readFAddress :: ReadForeign Address where
+  readImpl a = do
+    hexString <- readImpl a
+    either (fail <<< ForeignError) pure $ _decode hexString
+
+instance writeFAddress :: WriteForeign Address where
+  writeImpl = writeImpl <<< unAddress
 
 instance decodeJsonAddress :: A.DecodeJson Address where
   decodeJson json = do
@@ -131,12 +134,6 @@ instance decodeJsonAddress :: A.DecodeJson Address where
 
 instance encodeJsonAddress :: A.EncodeJson Address where
   encodeJson = A.encodeJson <<< unAddress
-
-instance readFAddress :: ReadForeign Address where
-  readImpl = decode
-
-instance writeFAddress :: WriteForeign Address where
-  writeImpl = encode
 
 unAddress :: Address -> HexString
 unAddress (Address a) = a
