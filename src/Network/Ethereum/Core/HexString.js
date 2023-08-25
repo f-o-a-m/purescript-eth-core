@@ -1,8 +1,7 @@
 "use strict";
+import BigNumber from "bn.js";
 
-var BigNumber = require('bn.js');
-
-exports.toBigNumber = function(str) {
+export const toBigNumber = function(str) {
     return new BigNumber(str, 16);
 };
 
@@ -17,7 +16,7 @@ var signedIsNegative = function (value) {
     return msb === '1';
 };
 
-exports.toBigNumberFromSignedHexString = function (value) {
+export const toBigNumberFromSignedHexString = function (value) {
     if (signedIsNegative(value)) {
         return new BigNumber(value, 16).sub(new BigNumber('ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 16)).subn(1);
     }
