@@ -118,7 +118,6 @@ _decode hx = case mkAddress hx of
   Nothing -> Left $ "Address must be 20 bytes long: " <> show hx
   Just res -> Right res
 
-
 instance readFAddress :: ReadForeign Address where
   readImpl a = do
     hexString <- readImpl a
