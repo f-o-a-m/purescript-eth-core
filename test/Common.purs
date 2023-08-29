@@ -44,10 +44,10 @@ newtype RawTransaction =
     , nonce :: BigNumber
     }
 
-derive instance genericRawTransaction :: Generic RawTransaction _
-derive instance eqRawTransaction :: Eq RawTransaction
+derive instance Generic RawTransaction _
+derive instance Eq RawTransaction
 
-instance showRawTransaction :: Show RawTransaction where
+instance Show RawTransaction where
   show = genericShow
 
 makeTransactionMessage
