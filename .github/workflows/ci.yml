@@ -1,0 +1,17 @@
+steps:
+- uses: actions/checkout@v3
+- uses: actions/setup-node@v3
+  with:
+    node-version: 16
+    cache: 'npm'
+- name: Cache PureScript dependencies
+  uses: actions/cache@v2
+  with:
+    key: ${{ runner.os }}-spago-${{ hashFiles('**/*.dhall') }}
+    path: |
+      .spago
+      output
+- run: npm i
+- run: npm run tidy-check
+- run: npm run test
+
