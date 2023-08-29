@@ -46,5 +46,5 @@ transRLP obj = case obj of
 
 foreign import _rlpEncode :: RLPVal -> ByteString
 
-instance rlpEncodeObject :: RLPEncode RLPObject where
+instance RLPEncode RLPObject where
   rlpEncode = _rlpEncode <<< transRLP

@@ -6,11 +6,10 @@ import Control.Monad.Except (runExcept)
 import Data.Argonaut as A
 import Data.Either (Either(..), hush)
 import Foreign (unsafeToForeign)
-import Foreign.Class (decode, encode)
 import Data.Maybe (Maybe(..), fromJust)
 import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber, divide)
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (readImpl)
+import Simple.JSON (readImpl, writeImpl)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -74,11 +73,9 @@ bigNumberSpec = describe "BigNumber-spec" do
       let
         bnString = "f43"
         d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign bnString)
-        d2 = unsafePartial $ fromJust $ hush $ runExcept $ decode (unsafeToForeign bnString)
-        d3 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString bnString)
-        d4 = unsafePartial $ fromJust $ parseBigNumber hexadecimal bnString
-      d4 `shouldEqual` d1
-      d4 `shouldEqual` d2
-      d4 `shouldEqual` d3
-      runExcept (decode (encode d1)) `shouldEqual` Right d4
-      (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d4
+        d2 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString bnString)
+        d3 = unsafePartial $ fromJust $ parseBigNumber hexadecimal bnString
+      d3 `shouldEqual` d1
+      d3 `shouldEqual` d2
+      runExcept (readImpl (writeImpl d1)) `shouldEqual` Right d3
+      (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d3

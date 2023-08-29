@@ -21,8 +21,7 @@ import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
 import Data.Maybe (Maybe(..))
 import Data.Ring.Module (class LeftModule, class RightModule)
 import Foreign (ForeignError(..), readString, fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
@@ -34,17 +33,17 @@ foreign import data BigNumber :: Type
 -- | Convert a Big number into a string in the given base
 foreign import toString :: Int.Radix -> BigNumber -> String
 
-instance showBigNumber :: Show BigNumber where
+instance Show BigNumber where
   show = toString Int.decimal
 
 foreign import _eqBigNumber :: BigNumber -> BigNumber -> Boolean
 
-instance eqBigNumber :: Eq BigNumber where
+instance Eq BigNumber where
   eq = _eqBigNumber
 
 foreign import comparedTo :: BigNumber -> BigNumber -> Int
 
-instance ordBigNumber :: Ord BigNumber where
+instance Ord BigNumber where
   compare bn1 bn2 =
     let
       n = comparedTo bn1 bn2
@@ -65,7 +64,7 @@ embedInt = _intToBigNumber
 
 foreign import _numberToBigNumber :: Number -> BigNumber
 
-instance semiringBigNumber :: Semiring BigNumber where
+instance Semiring BigNumber where
   add = _addBigNumber
   mul = _mulBigNumber
   zero = embedInt 0
@@ -73,27 +72,27 @@ instance semiringBigNumber :: Semiring BigNumber where
 
 foreign import _subBigNumber :: BigNumber -> BigNumber -> BigNumber
 
-instance ringBigNumber :: Ring BigNumber where
+instance Ring BigNumber where
   sub = _subBigNumber
 
-instance commutativeRingBigNumber :: CommutativeRing BigNumber
+instance CommutativeRing BigNumber
 
 foreign import _divBigNumber :: BigNumber -> BigNumber -> BigNumber
 
 foreign import _modBigNumber :: BigNumber -> BigNumber -> BigNumber
 
-instance euclidianRingBigNumber :: EuclideanRing BigNumber where
+instance EuclideanRing BigNumber where
   degree _ = 1
   div = _divBigNumber
   mod = _modBigNumber
 
-instance bigNumberLModule :: LeftModule BigNumber Int where
+instance LeftModule BigNumber Int where
   mzeroL = embedInt 0
   maddL = add
   msubL = sub
   mmulL a b = embedInt a * b
 
-instance bigNumberRModule :: RightModule BigNumber Int where
+instance RightModule BigNumber Int where
   mzeroR = embedInt 0
   maddR = add
   msubR = sub
@@ -102,7 +101,7 @@ instance bigNumberRModule :: RightModule BigNumber Int where
 class (Ring r, Ring a, LeftModule a r, RightModule a r) <= Algebra a r where
   embed :: r -> a
 
-instance embedInt' :: Algebra BigNumber Int where
+instance Algebra BigNumber Int where
   embed = embedInt
 
 foreign import divide :: BigNumber -> BigNumber -> BigNumber
@@ -141,24 +140,18 @@ _decode str = case parseBigNumber Int.hexadecimal str of
   Nothing -> Left $ "Failed to parse as BigNumber: " <> str
   Just n -> Right n
 
-instance decodeBigNumber :: Decode BigNumber where
-  decode x = do
+instance ReadForeign BigNumber where
+  readImpl x = do
     str <- readString x
     either (fail <<< ForeignError) pure $ _decode str
 
-instance readFBigNumber :: ReadForeign BigNumber where
-  readImpl = decode
+instance WriteForeign BigNumber where
+  writeImpl = writeImpl <<< _encode
 
-instance writeFBigNumber :: WriteForeign BigNumber where
-  writeImpl = encode
-
-instance encodeBigNumber :: Encode BigNumber where
-  encode = encode <<< _encode
-
-instance decodeJsonBigNumber :: A.DecodeJson BigNumber where
+instance A.DecodeJson BigNumber where
   decodeJson json = do
     str <- A.decodeJson json
     either (const <<< Left $ UnexpectedValue json) Right $ _decode str
 
-instance encodeJsonBigNumber :: A.EncodeJson BigNumber where
+instance A.EncodeJson BigNumber where
   encodeJson = A.encodeJson <<< _encode

@@ -9,11 +9,10 @@ import Data.ByteString as BS
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(Just), fromJust)
 import Foreign (unsafeToForeign)
-import Foreign.Class (encode, decode)
 import Network.Ethereum.Core.HexString (HexString, mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (readImpl)
+import Simple.JSON (readImpl, writeImpl)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -69,11 +68,9 @@ hexSpec = describe "hex-spec" do
       let
         hxString = "0f43"
         d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign hxString)
-        d2 = unsafePartial $ fromJust $ hush $ runExcept $ decode (unsafeToForeign hxString)
-        d3 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString hxString)
-        d4 = unsafePartial $ fromJust $ mkHexString hxString
-      d4 `shouldEqual` d1
-      d4 `shouldEqual` d2
-      d4 `shouldEqual` d3
-      runExcept (decode (encode d1)) `shouldEqual` Right d4
-      (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d4
+        d2 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString hxString)
+        d3 = unsafePartial $ fromJust $ mkHexString hxString
+      d3 `shouldEqual` d1
+      d3 `shouldEqual` d2
+      runExcept (readImpl (writeImpl d1)) `shouldEqual` Right d3
+      (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d3

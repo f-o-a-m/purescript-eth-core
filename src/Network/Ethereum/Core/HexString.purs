@@ -40,11 +40,10 @@ import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Foreign (ForeignError(..), fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 
 --------------------------------------------------------------------------------
 -- * Signed Values
@@ -52,15 +51,15 @@ import Simple.JSON (class ReadForeign, class WriteForeign)
 
 data Sign = Pos | Neg
 
-derive instance eqSign :: Eq Sign
+derive instance Eq Sign
 
 -- | Represents values that can be either positive or negative.
 data Signed a = Signed Sign a
 
-instance eqSigned :: Eq a => Eq (Signed a) where
+instance Eq a => Eq (Signed a) where
   eq (Signed s a) (Signed s' a') = (s `eq` s') && (a `eq` a')
 
-instance mapSigned :: Functor Signed where
+instance Functor Signed where
   map f (Signed s a) = Signed s (f a)
 
 -- | Coerce a value into a positive signed value
@@ -74,13 +73,13 @@ asSigned a = Signed Pos a
 -- | Represents a base16, utf8 encoded bytestring
 newtype HexString = HexString String
 
-instance showHexString :: Show HexString where
+instance Show HexString where
   show (HexString s) = "0x" <> s
 
-derive newtype instance hexStringEq :: Eq HexString
-derive newtype instance hexStringOrd :: Ord HexString
-derive newtype instance semigpStringEq :: Semigroup HexString
-derive newtype instance monoidStringEq :: Monoid HexString
+derive newtype instance Eq HexString
+derive newtype instance Ord HexString
+derive newtype instance Semigroup HexString
+derive newtype instance Monoid HexString
 
 _encode :: HexString -> String
 _encode = append "0x" <<< unHex
@@ -90,26 +89,20 @@ _decode str = case mkHexString str of
   Just res -> Right res
   Nothing -> Left $ "Failed to parse as HexString: " <> str
 
-instance decodeHexString :: Decode HexString where
-  decode s = do
-    str <- decode s
+instance ReadForeign HexString where
+  readImpl f = do
+    str <- readImpl f
     either (fail <<< ForeignError) pure $ _decode str
 
-instance readFHexString :: ReadForeign HexString where
-  readImpl = decode
+instance WriteForeign HexString where
+  writeImpl = writeImpl <<< _encode
 
-instance writeFHexString :: WriteForeign HexString where
-  writeImpl = encode
-
-instance encodeHexString :: Encode HexString where
-  encode = encode <<< _encode
-
-instance decodeJsonHexString :: A.DecodeJson HexString where
+instance A.DecodeJson HexString where
   decodeJson json = do
     str <- A.decodeJson json
     either (const <<< Left $ UnexpectedValue json) Right $ _decode str
 
-instance encodeJsonHexString :: A.EncodeJson HexString where
+instance A.EncodeJson HexString where
   encodeJson = A.encodeJson <<< _encode
 
 unHex :: HexString -> String

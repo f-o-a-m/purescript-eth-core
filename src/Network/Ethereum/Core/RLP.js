@@ -1,5 +1,5 @@
-var rlp = require('rlp');
+import { encode } from "rlp";
 
-exports._rlpEncode = rlp.encode;
+export const _rlpEncode = encode;
 
-exports._rlpNull = null;
+export const _rlpNull = null;

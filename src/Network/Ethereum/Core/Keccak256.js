@@ -1,6 +1,6 @@
 "use strict";
-var keccak = require('keccak');
+import keccak from "keccak";
 
-exports._keccak256 = function (a) {
+export const _keccak256 = function (a) {
     return keccak('keccak256').update(a).digest();
 };

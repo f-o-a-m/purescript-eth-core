@@ -1,5 +1,5 @@
 language: node_js
-dist: focal
+dist: jammy
 sudo: required
 node_js: stable
 install:
@@ -8,7 +8,7 @@ install:
   - spago build
 script:
   - npm run test
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run tidy-check; fi
+  - npm run tidy-check
 after_success:
 - >-
   test $TRAVIS_TAG &&

@@ -1,48 +1,48 @@
 "use strict";
-var BigNumber = require('bn.js');
+import BigNumber from "bn.js";
 
 //NOTE: According to the documentation, many binary operators can take a normal js Number
 //by suffixing the version for BN with 'n'.
 
-exports._intToBigNumber = function(value) {
+export const _intToBigNumber = function(value) {
   return new BigNumber(value.toString(10), 10);
 };
 
-exports._numberToBigNumber = function(value) {
+export const _numberToBigNumber = function(value) {
     return new BigNumber(value);
 };
 
-exports._eqBigNumber = function(n) {
+export const _eqBigNumber = function(n) {
     return function(m) { return m.eq(n); };
 };
 
-exports._addBigNumber = function(n) {
+export const _addBigNumber = function(n) {
     return function (m) { return n.add(m); };
 };
 
-exports._mulBigNumber = function(n) {
+export const _mulBigNumber = function(n) {
     return function (m) { return n.mul(m); };
 };
 
-exports._subBigNumber = function(n) {
+export const _subBigNumber = function(n) {
     return function (m) { return n.sub(m); };
 };
 
-exports._divBigNumber = function(n) {
+export const _divBigNumber = function(n) {
   return function (m) { return n.div(m); }
 }
 
-exports._modBigNumber = function(n) {
+export const _modBigNumber = function(n) {
   return function(m) { return n.mod(m); }
 }
 
-exports.comparedTo = function (a) {
+export const comparedTo = function (a) {
   return function (b) {
     return a.cmp(b);
   };
 };
 
-exports.fromStringAsImpl = function (just) {
+export const fromStringAsImpl = function (just) {
   return function (nothing) {
     return function (radix) {
       var digits;
@@ -72,11 +72,11 @@ exports.fromStringAsImpl = function (just) {
   };
 };
 
-exports.toString = function (radix) {
+export const toString = function (radix) {
   return function (bn) { return bn.toString(radix); };
 };
 
-exports.toTwosComplement = function (bn) {
+export const toTwosComplement = function (bn) {
   if (bn.ltn(0)) {
       return new BigNumber("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16).add(bn).addn(1);
   } else {
@@ -84,20 +84,20 @@ exports.toTwosComplement = function (bn) {
   }
 };
 
-exports.floorBigNumber = function(bn) {
+export const floorBigNumber = function(bn) {
     var bnStr = bn.toString(10);
     var newBn = new BigNumber(bnStr, 10);
     return newBn;
 };
 
-exports.pow = function(n) {
+export const pow = function(n) {
     return function (m) {
         var exp = new BigNumber(m, 10);
         return n.pow(exp);
     };
 };
 
-exports.toNumber = function (n) {
+export const toNumber = function (n) {
     var newN = new BigNumber(n);
     return newN.toNumber();
 };
@@ -112,7 +112,7 @@ var isString = function (object) {
         (object && object.constructor && object.constructor.name === 'String');
 };
 
-exports.divide = function (n) {
+export const divide = function (n) {
     return function (d) {
         var newN = n.div(d);
         return newN;

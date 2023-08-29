@@ -34,28 +34,28 @@ import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), fromJust)
 import Effect (Effect)
 import Foreign (ForeignError(..), fail)
-import Foreign.Class (class Decode, class Encode, decode, encode)
+-- import Foreign.Class (class Decode, class Encode, decode, encode)
 import Network.Ethereum.Core.HexString (HexString, takeBytes, nullWord, dropBytes, numberOfBytes, toByteString, fromByteString)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
 import Type.Quotient (mkQuotient)
 
 -- | Opaque PrivateKey type
 newtype PrivateKey = PrivateKey BS.ByteString
 
-instance showPrivateKey :: Show PrivateKey where
+instance Show PrivateKey where
   show (PrivateKey pk) = show $ fromByteString pk
 
-derive instance eqPrivateKey :: Eq PrivateKey
+derive instance Eq PrivateKey
 
 -- | Opaque PublicKey type
 newtype PublicKey = PublicKey BS.ByteString
 
-instance showPublicKey :: Show PublicKey where
+instance Show PublicKey where
   show (PublicKey pk) = show $ fromByteString pk
 
-derive instance eqPublicKey :: Eq PublicKey
+derive instance Eq PublicKey
 
 foreign import isValidPublic
   :: BS.ByteString
@@ -109,34 +109,30 @@ foreign import generatePrivateKey :: Effect PrivateKey
 -- | Represents and Ethereum address, which is a 20 byte `HexString`
 newtype Address = Address HexString
 
-derive newtype instance addressShow :: Show Address
-derive newtype instance addressEq :: Eq Address
-derive newtype instance addressOrd :: Ord Address
-derive newtype instance encodeAddress :: Encode Address
+derive newtype instance Show Address
+derive newtype instance Eq Address
+derive newtype instance Ord Address
 
 _decode :: HexString -> Either String Address
 _decode hx = case mkAddress hx of
   Nothing -> Left $ "Address must be 20 bytes long: " <> show hx
   Just res -> Right res
 
-instance decodeAddress :: Decode Address where
-  decode a = do
-    hxString <- decode a
-    either (fail <<< ForeignError) pure $ _decode hxString
+instance ReadForeign Address where
+  readImpl a = do
+    hexString <- readImpl a
+    either (fail <<< ForeignError) pure $ _decode hexString
 
-instance decodeJsonAddress :: A.DecodeJson Address where
+instance WriteForeign Address where
+  writeImpl = writeImpl <<< unAddress
+
+instance A.DecodeJson Address where
   decodeJson json = do
     hxString <- A.decodeJson json
     either (const <<< Left $ UnexpectedValue json) Right $ _decode hxString
 
-instance encodeJsonAddress :: A.EncodeJson Address where
+instance A.EncodeJson Address where
   encodeJson = A.encodeJson <<< unAddress
-
-instance readFAddress :: ReadForeign Address where
-  readImpl = decode
-
-instance writeFAddress :: WriteForeign Address where
-  writeImpl = encode
 
 unAddress :: Address -> HexString
 unAddress (Address a) = a
@@ -170,10 +166,10 @@ newtype Signature =
     , v :: Int
     }
 
-derive instance genericSignature :: Generic Signature _
-derive instance eqSignature :: Eq Signature
+derive instance Generic Signature _
+derive instance Eq Signature
 
-instance showSignature :: Show Signature where
+instance Show Signature where
   show = genericShow
 
 foreign import ecSign :: Fn2 PrivateKey BS.ByteString { r :: BS.ByteString, s :: BS.ByteString, v :: Int }
@@ -214,10 +210,10 @@ recoverSender messageHash (Signature { v, r, s }) =
 -- | Used in Ethereum to prevent replay attacks
 newtype ChainId = ChainId Int
 
-derive instance genericChainId :: Generic ChainId _
-derive instance eqChainId :: Eq ChainId
+derive instance Generic ChainId _
+derive instance Eq ChainId
 
-instance showChainId :: Show ChainId where
+instance Show ChainId where
   show = genericShow
 
 -- | Add the ChainId offset to the `Signature` `v` parameter.
