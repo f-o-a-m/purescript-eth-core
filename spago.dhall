@@ -13,6 +13,7 @@
   , "ordered-collections"
   , "partial"
   , "prelude"
+  , "quickcheck"
   , "quotient"
   , "ring-modules"
   , "simple-json"

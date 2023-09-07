@@ -22,6 +22,7 @@ import Data.Maybe (Maybe(..))
 import Data.Ring.Module (class LeftModule, class RightModule)
 import Foreign (ForeignError(..), readString, fail)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
+import Test.QuickCheck (class Arbitrary, arbitrary)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
@@ -29,6 +30,9 @@ import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 -- | Large Integer, needed for handling numbers of up to 32 bytes
 foreign import data BigNumber :: Type
+
+instance Arbitrary BigNumber where
+  arbitrary = embedInt <$> arbitrary
 
 -- | Convert a Big number into a string in the given base
 foreign import toString :: Int.Radix -> BigNumber -> String
