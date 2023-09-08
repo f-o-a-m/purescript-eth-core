@@ -13,7 +13,7 @@ import Network.Ethereum.Core.BigNumber as Int
 import Network.Ethereum.Core.HexString (HexString, unHex)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl, writeImpl)
-import Test.QuickCheck (class Arbitrary, quickCheck, (===), (<?>))
+import Test.QuickCheck (class Arbitrary, quickCheck, (<?>), (===))
 import Test.QuickCheck.Gen as Gen
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -26,16 +26,13 @@ bigNumberSpec = describe "BigNumber-spec" do
       map show (parseBigNumber decimal "-----bla") `shouldEqual` Nothing
       map show (parseBigNumber decimal "-----20") `shouldEqual` Nothing
 
-    it "can handle turning strings into numbers" do
-      map show (parseBigNumber decimal "1") `shouldEqual` Just "1"
+    it "can handle turning strings into numbers" $ liftEffect do
+      quickCheck \(x :: Int) -> (parseBigNumber decimal $ show x) === Just (embed x)
       map show (parseBigNumber hexadecimal "0x1") `shouldEqual` Just "1"
       map show (parseBigNumber hexadecimal "0x01") `shouldEqual` Just "1"
-      map show (parseBigNumber decimal "15") `shouldEqual` Just "15"
       map show (parseBigNumber hexadecimal "0xf") `shouldEqual` Just "15"
       map show (parseBigNumber hexadecimal "0x0f") `shouldEqual` Just "15"
-      map show (parseBigNumber decimal "-1") `shouldEqual` Just "-1"
       map show (parseBigNumber hexadecimal "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff") `shouldEqual` Just "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-      map show (parseBigNumber hexadecimal "0") `shouldEqual` Just "0"
       map show (parseBigNumber hexadecimal "0x0") `shouldEqual` Just "0"
 
     it "can handle turning ints into big numbers" $ liftEffect $ do
