@@ -36,8 +36,8 @@ newtype BigNumber = BigNumber BigInt
 
 derive instance Newtype BigNumber _
 derive instance Generic BigNumber _
-derive instance Eq BigNumber
-derive instance Ord BigNumber
+derive newtype instance Eq BigNumber
+derive newtype instance Ord BigNumber
 
 instance Show BigNumber where
   show = toString Int.decimal
