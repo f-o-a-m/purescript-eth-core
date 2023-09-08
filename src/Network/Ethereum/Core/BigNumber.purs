@@ -26,6 +26,7 @@ import JS.BigInt (BigInt)
 import JS.BigInt as BI
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
+import Test.QuickCheck (class Arbitrary, arbitrary)
 
 --------------------------------------------------------------------------------
 -- * BigNumber

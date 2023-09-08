@@ -3,9 +3,9 @@
   [ "argonaut"
   , "arrays"
   , "bytestrings"
+  , "console"
   , "effect"
   , "either"
-  , "foldable-traversable"
   , "foreign"
   , "functions"
   , "integers"
@@ -22,6 +22,7 @@
   , "simple-json"
   , "strings"
   , "unsafe-coerce"
+  , "js-bigints"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]
