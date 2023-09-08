@@ -1,144 +1,72 @@
 module Network.Ethereum.Core.BigNumber
-  ( BigNumber
-  , class Algebra
+  ( class Algebra
+  , BigNumber(..)
   , embed
+  , module Int
+  , parseBigNumber
   , pow
   , toString
-  , parseBigNumber
   , toTwosComplement
   , unsafeToInt
-  , floorBigNumber
-  , divide
-  , module Int
   ) where
 
 import Prelude
 
 import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
-import Data.Either (Either(..), either)
-import Data.Int (Radix, binary, decimal, hexadecimal, floor) as Int
-import Data.Maybe (Maybe(..))
+import Data.Either (Either(..), either, hush)
+import Data.Generic.Rep (class Generic)
+import Data.Int (Radix, binary, decimal, floor, fromNumber, hexadecimal) as Int
+import Data.Maybe (Maybe(..), fromJust)
+import Data.Newtype (class Newtype, un)
 import Data.Ring.Module (class LeftModule, class RightModule)
 import Foreign (ForeignError(..), readString, fail)
+import JS.BigInt (BigInt)
+import JS.BigInt as BI
+import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
+import Test.QuickCheck (class Arbitrary, arbitrary)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
 --------------------------------------------------------------------------------
 
 -- | Large Integer, needed for handling numbers of up to 32 bytes
-foreign import data BigNumber :: Type
+newtype BigNumber = BigNumber BigInt
 
--- | Convert a Big number into a string in the given base
-foreign import toString :: Int.Radix -> BigNumber -> String
+derive instance Newtype BigNumber _
+derive instance Generic BigNumber _
+derive instance Eq BigNumber
+derive instance Ord BigNumber
 
 instance Show BigNumber where
   show = toString Int.decimal
 
-foreign import _eqBigNumber :: BigNumber -> BigNumber -> Boolean
-
-instance Eq BigNumber where
-  eq = _eqBigNumber
-
-foreign import comparedTo :: BigNumber -> BigNumber -> Int
-
-instance Ord BigNumber where
-  compare bn1 bn2 =
-    let
-      n = comparedTo bn1 bn2
-    in
-      case n of
-        0 -> EQ
-        1 -> GT
-        _ -> LT
-
-foreign import _addBigNumber :: BigNumber -> BigNumber -> BigNumber
-
-foreign import _mulBigNumber :: BigNumber -> BigNumber -> BigNumber
-
-foreign import _intToBigNumber :: Int -> BigNumber
-
-embedInt :: Int -> BigNumber
-embedInt = _intToBigNumber
-
-foreign import _numberToBigNumber :: Number -> BigNumber
-
-instance Semiring BigNumber where
-  add = _addBigNumber
-  mul = _mulBigNumber
-  zero = embedInt 0
-  one = embedInt 1
-
-foreign import _subBigNumber :: BigNumber -> BigNumber -> BigNumber
-
-instance Ring BigNumber where
-  sub = _subBigNumber
-
+derive newtype instance Semiring BigNumber
+derive newtype instance Ring BigNumber
 instance CommutativeRing BigNumber
+derive newtype instance EuclideanRing BigNumber
 
-foreign import _divBigNumber :: BigNumber -> BigNumber -> BigNumber
+instance Arbitrary BigNumber where
+  arbitrary = do
+    n <- arbitrary
+    pure $ BigNumber $ BI.fromInt n
 
-foreign import _modBigNumber :: BigNumber -> BigNumber -> BigNumber
-
-instance EuclideanRing BigNumber where
-  degree _ = 1
-  div = _divBigNumber
-  mod = _modBigNumber
-
-instance LeftModule BigNumber Int where
-  mzeroL = embedInt 0
-  maddL = add
-  msubL = sub
-  mmulL a b = embedInt a * b
-
-instance RightModule BigNumber Int where
-  mzeroR = embedInt 0
-  maddR = add
-  msubR = sub
-  mmulR a b = a * embedInt b
-
-class (Ring r, Ring a, LeftModule a r, RightModule a r) <= Algebra a r where
-  embed :: r -> a
-
-instance Algebra BigNumber Int where
-  embed = embedInt
-
-foreign import divide :: BigNumber -> BigNumber -> BigNumber
-
-foreign import fromStringAsImpl
-  :: (forall a. a -> Maybe a)
-  -> (forall a. Maybe a)
-  -> Int.Radix
-  -> String
-  -> Maybe BigNumber
-
--- | Convert a string in the given base to a `BigNumber`
-parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
-parseBigNumber = fromStringAsImpl Just Nothing
-
--- | Take the twos complement of a `BigNumer`
-foreign import toTwosComplement :: BigNumber -> BigNumber
-
--- | Exponentiate a `BigNumber`
-foreign import pow :: BigNumber -> Int -> BigNumber
-
-foreign import toNumber :: BigNumber -> Number
-
--- | Unsafely coerce a BigNumber to an Int.
-unsafeToInt :: BigNumber -> Int
-unsafeToInt = Int.floor <<< toNumber
-
--- | Take the integer part of a big number
-foreign import floorBigNumber :: BigNumber -> BigNumber
+toString :: Int.Radix -> BigNumber -> String
+toString radix = BI.toStringAs radix <<< un BigNumber
 
 _encode :: BigNumber -> String
 _encode = (append "0x") <<< toString Int.hexadecimal
 
 _decode :: String -> Either String BigNumber
-_decode str = case parseBigNumber Int.hexadecimal str of
-  Nothing -> Left $ "Failed to parse as BigNumber: " <> str
-  Just n -> Right n
+_decode str
+  | str == "0x" = Right zero
+  | otherwise = case BI.fromString str of
+      Nothing -> Left $ "Failed to parse as BigNumber: " <> str
+      Just n -> Right (BigNumber n)
+
+parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
+parseBigNumber _ = hush <<< _decode
 
 instance ReadForeign BigNumber where
   readImpl x = do
@@ -155,3 +83,42 @@ instance A.DecodeJson BigNumber where
 
 instance A.EncodeJson BigNumber where
   encodeJson = A.encodeJson <<< _encode
+
+toNumber :: BigNumber -> Number
+toNumber = BI.toNumber <<< un BigNumber
+
+-- | Exponentiate a `BigNumber`
+pow :: BigNumber -> Int -> BigNumber
+pow (BigNumber n) k = BigNumber $ BI.pow n (BI.fromInt k)
+
+-- | Unsafely coerce a BigNumber to an Int.
+unsafeToInt :: BigNumber -> Int
+unsafeToInt n = unsafePartial $ fromJust
+  $ Int.fromNumber
+  $ toNumber n
+
+toTwosComplement :: BigNumber -> BigNumber
+toTwosComplement n =
+  if n < zero then maxBigNumber + n + one
+  else n
+  where
+  maxBigNumber = BigNumber $ unsafePartial $ fromJust $
+    BI.fromString "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+
+instance LeftModule BigNumber Int where
+  mzeroL = zero
+  maddL = add
+  msubL = sub
+  mmulL a b = embed a * b
+
+instance RightModule BigNumber Int where
+  mzeroR = zero
+  maddR = add
+  msubR = sub
+  mmulR a b = a * embed b
+
+class (Ring r, Ring a, LeftModule a r, RightModule a r) <= Algebra a r where
+  embed :: r -> a
+
+instance Algebra BigNumber Int where
+  embed = BigNumber <<< BI.fromInt

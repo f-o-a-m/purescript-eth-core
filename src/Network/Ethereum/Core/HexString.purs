@@ -24,13 +24,15 @@ module Network.Ethereum.Core.HexString
   , toBigNumberFromSignedHexString
   , toByteString
   , fromByteString
+  , genByte
   ) where
 
 import Prelude
 
 import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
-import Data.Array (uncons, unsafeIndex, replicate)
+import Data.Array (fold, fromFoldable, replicate, uncons, unsafeIndex)
+import Data.Array.NonEmpty as NEA
 import Data.ByteString (ByteString, toString, fromString) as BS
 import Data.Either (Either(..), either)
 import Data.Int (even)
@@ -44,6 +46,9 @@ import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
+import Test.QuickCheck.Arbitrary (class Arbitrary)
+import Test.QuickCheck.Gen (Gen)
+import Test.QuickCheck.Gen as Gen
 
 --------------------------------------------------------------------------------
 -- * Signed Values
@@ -80,6 +85,18 @@ derive newtype instance Eq HexString
 derive newtype instance Ord HexString
 derive newtype instance Semigroup HexString
 derive newtype instance Monoid HexString
+
+genByte :: Gen HexString
+genByte = do
+  cs <- Gen.listOf 2 (Gen.oneOf (pure <$> hexAlph))
+  pure $ HexString $ fromCharArray (fromFoldable cs)
+  where
+  hexAlph = unsafePartial $ fromJust $ NEA.fromFoldable <<< toCharArray $ "0123456789abcdefABCDEF"
+
+instance Arbitrary HexString where
+  arbitrary = do
+    n <- Gen.chooseInt 0 100
+    fold <<< fromFoldable <$> Gen.listOf n genByte
 
 _encode :: HexString -> String
 _encode = append "0x" <<< unHex
