@@ -7,7 +7,7 @@ import Data.Argonaut as A
 import Data.Either (Either(..), hush)
 import Foreign (unsafeToForeign)
 import Data.Maybe (Maybe(..), fromJust)
-import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber, divide)
+import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl, writeImpl)
 import Test.Spec (Spec, describe, it)
@@ -50,11 +50,11 @@ bigNumberSpec = describe "BigNumber-spec" do
       Just (embed 15 :: BigNumber) `shouldEqual` (parseBigNumber decimal "15")
 
     it "can handle roundedDiv" do
-      divide (embed 2) (embed 1) `shouldEqual` embed 2
-      divide (embed 2) (embed 2) `shouldEqual` embed 1
-      divide (embed 2) (embed 3) `shouldEqual` embed 0
-      divide (embed 100) (embed 10) `shouldEqual` embed 10
-      divide (embed 100) (embed 3) `shouldEqual` embed 33
+      div (embed @BigNumber 2) (embed 1) `shouldEqual` embed 2
+      div (embed @BigNumber 2) (embed 2) `shouldEqual` embed 1
+      div (embed @BigNumber 2) (embed 3) `shouldEqual` embed 0
+      div (embed @BigNumber 100) (embed 10) `shouldEqual` embed 10
+      div (embed @BigNumber 100) (embed 3) `shouldEqual` embed 33
 
   describe "BigNumber arithmetic" do
     it "can add, subtract, and multiply BigNumbers as an Int-Alegbra" do
