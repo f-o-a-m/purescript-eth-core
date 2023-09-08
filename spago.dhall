@@ -3,7 +3,6 @@
   [ "argonaut"
   , "arrays"
   , "bytestrings"
-  , "console"
   , "effect"
   , "either"
   , "foreign"
@@ -22,7 +21,6 @@
   , "simple-json"
   , "strings"
   , "unsafe-coerce"
-  , "js-bigints"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs" ]

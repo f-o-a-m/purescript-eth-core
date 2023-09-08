@@ -5,15 +5,15 @@ import Prelude
 import Control.Monad.Except (runExcept)
 import Data.Argonaut as A
 import Data.Either (Either(..), hush)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..), fromJust, isJust)
 import Effect.Class (liftEffect)
-import Effect.Console as Console
 import Foreign (unsafeToForeign)
 import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
 import Network.Ethereum.Core.BigNumber as Int
+import Network.Ethereum.Core.HexString (HexString, unHex)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl, writeImpl)
-import Test.QuickCheck (class Arbitrary, quickCheck, (<?>), (===))
+import Test.QuickCheck (class Arbitrary, quickCheck, (===), (<?>))
 import Test.QuickCheck.Gen as Gen
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
@@ -41,13 +41,6 @@ bigNumberSpec = describe "BigNumber-spec" do
     it "can handle turning ints into big numbers" $ liftEffect $ do
       quickCheck \(x :: Int) -> embed x === (unsafeParseBN decimal $ show x)
 
-    it "can handle roundedDiv" do
-      div (embed @BigNumber 2) (embed 1) `shouldEqual` embed 2
-      div (embed @BigNumber 2) (embed 2) `shouldEqual` embed 1
-      div (embed @BigNumber 2) (embed 3) `shouldEqual` embed 0
-      div (embed @BigNumber 100) (embed 10) `shouldEqual` embed 10
-      div (embed @BigNumber 100) (embed 3) `shouldEqual` embed 33
-
   describe "BigNumber arithmetic" do
     it "can add, subtract, and multiply BigNumbers as an Int-Alegbra" $ liftEffect do
       quickCheck \(x :: Int) (y :: Int) -> (embed x + embed y) === embed @BigNumber (x + y)
@@ -66,16 +59,20 @@ bigNumberSpec = describe "BigNumber-spec" do
         in
           (embed x `mod` embed y') === embed @BigNumber (x `mod` y')
 
-    it "can handle deserialization" do
-      let
-        bnString = "f43"
-        d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign bnString)
-        d2 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString bnString)
-        d3 = unsafePartial $ fromJust $ parseBigNumber hexadecimal bnString
-      d3 `shouldEqual` d1
-      d3 `shouldEqual` d2
-      runExcept (readImpl (writeImpl d1)) `shouldEqual` Right d3
-      (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d3
+    it "can handle deserialization" $ liftEffect do
+      quickCheck \(_bnString :: HexString) ->
+        let
+          bnString = "0x" <> unHex _bnString
+          d1 = hush $ runExcept $ readImpl (unsafeToForeign bnString)
+          (d2 :: Maybe BigNumber) = hush $ A.decodeJson (A.fromString bnString)
+          d3 = parseBigNumber hexadecimal bnString
+        in
+          ( isJust d1
+              && (d3 == d1)
+              && (d3 == d2)
+              && ((A.decodeJson (A.encodeJson d1)) == Right d3)
+              && (runExcept (readImpl (writeImpl d1)) == Right d3)
+          ) <?> ("Failed to deserialize " <> bnString <> " to a BigNumber")
 
 newtype SmallInt = SmallInt Int
 

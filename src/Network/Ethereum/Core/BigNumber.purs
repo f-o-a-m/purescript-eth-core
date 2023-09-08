@@ -1,14 +1,13 @@
 module Network.Ethereum.Core.BigNumber
-  ( BigNumber(..)
-  , class Algebra
+  ( class Algebra
+  , BigNumber(..)
   , embed
+  , module Int
+  , parseBigNumber
   , pow
   , toString
-  , parseBigNumber
   , toTwosComplement
   , unsafeToInt
-  --, floorBigNumber
-  , module Int
   ) where
 
 import Prelude
@@ -48,6 +47,11 @@ derive newtype instance Ring BigNumber
 instance CommutativeRing BigNumber
 derive newtype instance EuclideanRing BigNumber
 
+instance Arbitrary BigNumber where
+  arbitrary = do
+    n <- arbitrary
+    pure $ BigNumber $ BI.fromInt n
+
 toString :: Int.Radix -> BigNumber -> String
 toString radix = BI.toStringAs radix <<< un BigNumber
 
@@ -55,9 +59,11 @@ _encode :: BigNumber -> String
 _encode = (append "0x") <<< toString Int.hexadecimal
 
 _decode :: String -> Either String BigNumber
-_decode str = case BI.fromString str of
-  Nothing -> Left $ "Failed to parse as BigNumber: " <> str
-  Just n -> Right (BigNumber n)
+_decode str
+  | str == "0x" = Right zero
+  | otherwise = case BI.fromString str of
+      Nothing -> Left $ "Failed to parse as BigNumber: " <> str
+      Just n -> Right (BigNumber n)
 
 parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
 parseBigNumber _ = hush <<< _decode
