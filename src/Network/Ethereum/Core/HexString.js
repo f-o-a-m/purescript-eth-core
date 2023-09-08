@@ -17,7 +17,7 @@ const BN256_MAX_SUB_1 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffff
 
 export const toBigNumberFromSignedHexString = function (value) {
     if (signedIsNegative(value)) {
-        return toBigNumber(value) - BN256_MAX_SUB_1;
+        return (toBigNumber(value) - BN256_MAX_SUB_1) * -1n;
     }
     return toBigNumber(value);
 };
