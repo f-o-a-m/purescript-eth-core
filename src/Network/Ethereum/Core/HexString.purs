@@ -24,7 +24,7 @@ module Network.Ethereum.Core.HexString
   , toBigNumberFromSignedHexString
   , toByteString
   , fromByteString
-  , genByte
+  , genBytes
   ) where
 
 import Prelude
@@ -41,6 +41,7 @@ import Data.Set (fromFoldable, member) as Set
 import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
 import Data.String.CodeUnits (fromCharArray, toCharArray)
+import Data.Unfoldable (replicateA)
 import Foreign (ForeignError(..), fail)
 import Network.Ethereum.Core.BigNumber (BigNumber, toString, hexadecimal)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
@@ -86,17 +87,20 @@ derive newtype instance Ord HexString
 derive newtype instance Semigroup HexString
 derive newtype instance Monoid HexString
 
-genByte :: Gen HexString
-genByte = do
-  cs <- Gen.listOf 2 (Gen.oneOf (pure <$> hexAlph))
-  pure $ HexString $ fromCharArray (fromFoldable cs)
+genBytes :: Int -> Gen HexString
+genBytes n = fold <$> replicateA n genByte
   where
-  hexAlph = unsafePartial $ fromJust $ NEA.fromFoldable <<< toCharArray $ "0123456789abcdefABCDEF"
+  genByte :: Gen HexString
+  genByte = do
+    cs <- Gen.listOf 2 (Gen.oneOf (pure <$> hexAlph))
+    pure $ HexString $ fromCharArray (fromFoldable cs)
+    where
+    hexAlph = unsafePartial $ fromJust $ NEA.fromFoldable <<< toCharArray $ "0123456789abcdefABCDEF"
 
 instance Arbitrary HexString where
   arbitrary = do
     n <- Gen.chooseInt 0 100
-    fold <<< fromFoldable <$> Gen.listOf n genByte
+    genBytes n
 
 _encode :: HexString -> String
 _encode = append "0x" <<< unHex

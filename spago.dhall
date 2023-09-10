@@ -20,6 +20,7 @@
   , "ring-modules"
   , "simple-json"
   , "strings"
+  , "unfoldable"
   , "unsafe-coerce"
   ]
 , packages = ./packages.dhall
