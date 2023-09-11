@@ -3,16 +3,17 @@ module CoreSpec.Hex (hexSpec) where
 import Prelude
 
 import Control.Monad.Except (runExcept)
-import Data.Argonaut (JsonDecodeError)
 import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(Just), fromJust)
+import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
-import Network.Ethereum.Core.HexString (HexString, mkHexString, toByteString, toUtf8, toAscii, fromUtf8, fromAscii)
+import Network.Ethereum.Core.HexString (HexString, fromAscii, fromUtf8, mkHexString, toAscii, toByteString, toUtf8, unHex)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl, writeImpl)
+import Test.QuickCheck (quickCheck)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -56,21 +57,24 @@ hexSpec = describe "hex-spec" do
 
   describe "json tests" do
 
-    it "can convert hex strings to and from json" do
+    it "can convert hex strings to and from json" $ liftEffect do
+      quickCheck $ \(hx :: HexString) ->
+        let
+          hxJson = A.fromString $ ("0x" <> unHex hx)
+        in
+          (A.stringify <<< A.encodeJson @HexString <$> (A.decodeJson hxJson)) == Right (A.stringify hxJson) &&
+            A.decodeJson (A.encodeJson hx) == Right hx
 
-      let
-        hx = (unsafePartial (fromJust <<< mkHexString) "0x6d79537472696e67")
-        hxJson = A.fromString "0x6d79537472696e67"
-      (A.stringify <<< A.encodeJson <$> (A.decodeJson hxJson :: Either JsonDecodeError HexString)) `shouldEqual` Right (A.stringify hxJson)
-      A.decodeJson (A.encodeJson hx) `shouldEqual` Right hx
-
-    it "can handle deserialization" do
-      let
-        hxString = "0f43"
-        d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign hxString)
-        d2 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString hxString)
-        d3 = unsafePartial $ fromJust $ mkHexString hxString
-      d3 `shouldEqual` d1
-      d3 `shouldEqual` d2
-      runExcept (readImpl (writeImpl d1)) `shouldEqual` Right d3
-      (A.decodeJson (A.encodeJson d1)) `shouldEqual` Right d3
+    it "can handle deserialization" $ liftEffect do
+      quickCheck $ \(_hxString :: HexString) ->
+        let
+          hxString = unHex _hxString
+          d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign hxString)
+          d2 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString hxString)
+          d3 = unsafePartial $ fromJust $ mkHexString hxString
+        in
+          d3 == d1
+            && d3 == d2
+            && runExcept (readImpl (writeImpl d1)) == Right d3
+            &&
+              (A.decodeJson (A.encodeJson d1)) == Right d3

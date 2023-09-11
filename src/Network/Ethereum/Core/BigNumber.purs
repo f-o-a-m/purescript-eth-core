@@ -6,8 +6,11 @@ module Network.Ethereum.Core.BigNumber
   , parseBigNumber
   , pow
   , toString
-  , toTwosComplement
+  , toTwosComplement256
+  , fromTwosComplement256
   , unsafeToInt
+  , toHexString
+  , fromHexString
   ) where
 
 import Prelude
@@ -23,6 +26,7 @@ import Data.Ring.Module (class LeftModule, class RightModule)
 import Foreign (ForeignError(..), readString, fail)
 import JS.BigInt (BigInt)
 import JS.BigInt as BI
+import Network.Ethereum.Core.HexString (HexString, mkHexString, unHex)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
 import Test.QuickCheck (class Arbitrary, arbitrary)
@@ -54,6 +58,12 @@ instance Arbitrary BigNumber where
 
 toString :: Int.Radix -> BigNumber -> String
 toString radix = BI.toStringAs radix <<< un BigNumber
+
+toHexString :: BigNumber -> Maybe HexString
+toHexString bn = mkHexString $ toString Int.hexadecimal bn
+
+fromHexString :: HexString -> Maybe BigNumber
+fromHexString hx = parseBigNumber Int.hexadecimal ("0x" <> unHex hx)
 
 _encode :: BigNumber -> String
 _encode = (append "0x") <<< toString Int.hexadecimal
@@ -97,13 +107,24 @@ unsafeToInt n = unsafePartial $ fromJust
   $ Int.fromNumber
   $ toNumber n
 
-toTwosComplement :: BigNumber -> BigNumber
-toTwosComplement n =
-  if n < zero then maxBigNumber + n + one
-  else n
+toTwosComplement256 :: BigNumber -> BigNumber
+toTwosComplement256 (BigNumber n) = BigNumber $
+  if n < zero then (n + (one `BI.shl` nbits)) `BI.and` ((one `BI.shl` nbits) - one)
+  else n `BI.and` ((one `BI.shl` nbits) - one)
   where
-  maxBigNumber = BigNumber $ unsafePartial $ fromJust $
-    BI.fromString "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  nbits = BI.fromInt 256
+
+fromTwosComplement256 :: BigNumber -> BigNumber
+fromTwosComplement256 (BigNumber n) = BigNumber $
+  if n `BI.and` signBitMask == zero then n
+  else
+    let
+      magnitude = ((BI.not n) `BI.and` ((one `BI.shl` nbits) - one)) + one
+    in
+      -magnitude
+  where
+  nbits = BI.fromInt 256
+  signBitMask = one `BI.shl` (nbits - one)
 
 instance LeftModule BigNumber Int where
   mzeroL = zero
