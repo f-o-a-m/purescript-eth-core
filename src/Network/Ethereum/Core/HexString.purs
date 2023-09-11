@@ -47,7 +47,7 @@ import Parsing (ParseState(..), ParserT, Position(..), getParserT, stateParserT)
 import Parsing as ParserT
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-import Test.QuickCheck.Arbitrary (class Arbitrary)
+import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
 import Test.QuickCheck.Gen (Gen)
 import Test.QuickCheck.Gen as Gen
 
@@ -59,18 +59,23 @@ data Sign = Pos | Neg
 
 derive instance Eq Sign
 
+instance Arbitrary Sign where
+  arbitrary = do
+    b <- arbitrary
+    pure $ if b then Pos else Neg
+
 -- | Represents values that can be either positive or negative.
 data Signed a = Signed Sign a
 
-instance Eq a => Eq (Signed a) where
-  eq (Signed s a) (Signed s' a') = (s `eq` s') && (a `eq` a')
-
-instance Functor Signed where
-  map f (Signed s a) = Signed s (f a)
+derive instance Eq a => Eq (Signed a)
+derive instance Functor Signed
 
 -- | Coerce a value into a positive signed value
 asSigned :: forall a. a -> Signed a
 asSigned a = Signed Pos a
+
+instance Arbitrary a => Arbitrary (Signed a) where
+  arbitrary = Signed <$> arbitrary <*> arbitrary
 
 --------------------------------------------------------------------------------
 -- * HexString

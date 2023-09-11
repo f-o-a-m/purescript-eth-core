@@ -8,7 +8,7 @@ import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(..), fromJust, isJust)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
-import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, hexadecimal, parseBigNumber)
+import Network.Ethereum.Core.BigNumber (BigNumber, decimal, embed, fromSignedHexString, fromTwosComplement256, hexadecimal, parseBigNumber, toSignedHexString, toString, toTwosComplement256)
 import Network.Ethereum.Core.BigNumber as Int
 import Network.Ethereum.Core.HexString (HexString, unHex)
 import Partial.Unsafe (unsafePartial)
@@ -70,6 +70,14 @@ bigNumberSpec = describe "BigNumber-spec" do
               && ((A.decodeJson (A.encodeJson d1)) == Right d3)
               && (runExcept (readImpl (writeImpl d1)) == Right d3)
           ) <?> ("Failed to deserialize " <> bnString <> " to a BigNumber")
+
+    it "can go to and from hex string" $ liftEffect do
+      quickCheck \(bn :: BigNumber) ->
+        (fromSignedHexString =<< toSignedHexString bn) == Just bn <?> ("Failed to convert " <> show bn <> " to hex string " <> show (toString hexadecimal bn))
+
+    it "can do twosComplement" $ liftEffect do
+      quickCheck \(bn :: BigNumber) ->
+        fromTwosComplement256 (toTwosComplement256 bn) === bn
 
 newtype SmallInt = SmallInt Int
 

@@ -9,8 +9,8 @@ module Network.Ethereum.Core.BigNumber
   , toTwosComplement256
   , fromTwosComplement256
   , unsafeToInt
-  , toHexString
-  , fromHexString
+  , toSignedHexString
+  , fromSignedHexString
   ) where
 
 import Prelude
@@ -26,7 +26,7 @@ import Data.Ring.Module (class LeftModule, class RightModule)
 import Foreign (ForeignError(..), readString, fail)
 import JS.BigInt (BigInt)
 import JS.BigInt as BI
-import Network.Ethereum.Core.HexString (HexString, mkHexString, unHex)
+import Network.Ethereum.Core.HexString (HexString, Signed(..), Sign(..), mkHexString, unHex)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
 import Test.QuickCheck (class Arbitrary, arbitrary)
@@ -59,11 +59,19 @@ instance Arbitrary BigNumber where
 toString :: Int.Radix -> BigNumber -> String
 toString radix = BI.toStringAs radix <<< un BigNumber
 
-toHexString :: BigNumber -> Maybe HexString
-toHexString bn = mkHexString $ toString Int.hexadecimal bn
+toSignedHexString :: BigNumber -> Maybe (Signed HexString)
+toSignedHexString bn =
+  if bn < zero then Signed Neg <$> mkHexString (toString Int.hexadecimal $ negate bn)
+  else Signed Pos <$> mkHexString (toString Int.hexadecimal bn)
 
-fromHexString :: HexString -> Maybe BigNumber
-fromHexString hx = parseBigNumber Int.hexadecimal ("0x" <> unHex hx)
+fromSignedHexString :: Signed HexString -> Maybe BigNumber
+fromSignedHexString (Signed sgn hx) =
+  let
+    coeff = case sgn of
+      Pos -> one
+      Neg -> -one
+  in
+    mul coeff <$> parseBigNumber Int.hexadecimal ("0x" <> unHex hx)
 
 _encode :: BigNumber -> String
 _encode = (append "0x") <<< toString Int.hexadecimal

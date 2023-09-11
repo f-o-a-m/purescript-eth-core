@@ -48,8 +48,6 @@ hexSpec = describe "hex-spec" do
 
       toAscii (unsafePartial (fromJust <<< mkHexString) "6d79537472696e67") `shouldEqual` "myString"
       toAscii (unsafePartial (fromJust <<< mkHexString) "6d79537472696e6700") `shouldEqual` "myString\x0000"
-    --  toAscii ((fromJust <<< mkHexString) "0300000035e8c6d54c5d127c9dcebe9e1a37ab9b05321128d097590a3c100000000000006521df642ff1f5ec0c3a7aa6cea6b1e7b7f7cda2cbdf07362a85088e97f19ef94331c955c0e9321ad386428c")
-    --    `shouldEqual` "\x0003\x0000\x0000\x00005èÆÕL]\x0012|Î¾\x001a7«\x00052\x0011(ÐY\n<\x0010\x0000\x0000\x0000\x0000\x0000\x0000e!ßd/ñõì\f:z¦Î¦±ç·÷Í¢Ëß\x00076*\bñùC1ÉUÀé2\x001aÓB"
 
     it "can convert asci to hex" do
       fromAscii "myString" `shouldEqual` unsafePartial (fromJust <<< mkHexString) "6d79537472696e67"
@@ -76,5 +74,4 @@ hexSpec = describe "hex-spec" do
           d3 == d1
             && d3 == d2
             && runExcept (readImpl (writeImpl d1)) == Right d3
-            &&
-              (A.decodeJson (A.encodeJson d1)) == Right d3
+            && (A.decodeJson (A.encodeJson d1)) == Right d3
