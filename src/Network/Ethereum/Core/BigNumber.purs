@@ -5,7 +5,9 @@ module Network.Ethereum.Core.BigNumber
   , module Int
   , pow
   , toString
+  , toStringAs
   , fromString
+  , fromStringAs
   , toTwosComplement256
   , fromTwosComplement256
   , unsafeToInt
@@ -17,9 +19,10 @@ import Data.Argonaut as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Int (Radix, binary, decimal, floor, fromNumber, hexadecimal) as Int
-import Data.Maybe (Maybe, fromJust, maybe)
+import Data.Maybe (Maybe, fromJust, fromMaybe, maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Ring.Module (class LeftModule, class RightModule)
+import Data.String (Pattern(..), stripPrefix)
 import Foreign as F
 import JS.BigInt (BigInt)
 import JS.BigInt as BI
@@ -53,26 +56,34 @@ instance Arbitrary BigNumber where
     pure $ BigNumber $ BI.fromInt n
 
 fromString :: String -> Maybe BigNumber
-fromString s = BigNumber <$> BI.fromStringAs Int.hexadecimal s
+fromString s = fromStringAs Int.hexadecimal s
+
+fromStringAs :: Int.Radix -> String -> Maybe BigNumber
+fromStringAs r s = BigNumber <$> BI.fromStringAs r s
 
 toString :: BigNumber -> String
-toString (BigNumber bn) = BI.toStringAs Int.hexadecimal bn
+toString bn = toStringAs Int.hexadecimal bn
+
+toStringAs :: Int.Radix -> BigNumber -> String
+toStringAs r (BigNumber bn) = BI.toStringAs r bn
 
 instance ReadForeign BigNumber where
   readImpl x = do
-    str <- F.readString x
-    maybe (F.fail $ F.ForeignError "Expected SignedHexString") pure (fromString str)
+    _str <- F.readString x
+    let str = fromMaybe _str $ stripPrefix (Pattern "0x") _str
+    maybe (F.fail $ F.ForeignError "Expected hex encoded BigInt") pure (fromString str)
 
 instance WriteForeign BigNumber where
-  writeImpl = writeImpl <<< toString
+  writeImpl = writeImpl <<< ("0x" <> _) <<< toString
 
 instance A.DecodeJson BigNumber where
   decodeJson json = do
-    str <- A.decodeJson json
-    maybe (Left $ A.TypeMismatch "Expected SignedHexString") pure $ fromString str
+    _str <- A.decodeJson json
+    let str = fromMaybe _str $ stripPrefix (Pattern "0x") _str
+    maybe (Left $ A.TypeMismatch "Expected hex encoded BigInt") pure $ fromString str
 
 instance A.EncodeJson BigNumber where
-  encodeJson = A.encodeJson <<< toString
+  encodeJson = A.encodeJson <<< ("0x" <> _) <<< toString
 
 toNumber :: BigNumber -> Number
 toNumber = BI.toNumber <<< un BigNumber
