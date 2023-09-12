@@ -1,18 +1,16 @@
 module Network.Ethereum.Core.HexString
   ( HexString
-  , Signed(..)
-  , Sign(..)
+  , PadByte(..)
   , mkHexString
   , unHex
   , numberOfBytes
   , dropBytes
   , takeBytes
   , nullWord
-  , getPadLength
   , padLeft
-  , padLeftSigned
   , padRight
-  , padRightSigned
+  , toString
+  , fromString
   , toUtf8
   , fromUtf8
   , toAscii
@@ -20,62 +18,30 @@ module Network.Ethereum.Core.HexString
   , toByteString
   , fromByteString
   , genBytes
-  , parseByte
-  , parseBytes
   ) where
 
 import Prelude
 
-import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
 import Data.Array (fold, fromFoldable, replicate, unsafeIndex)
 import Data.Array.NonEmpty as NEA
-import Data.ByteString (ByteString, toString, fromString) as BS
+import Data.ByteString as BS
 import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.NonEmpty (NonEmpty(..))
 import Data.Set (fromFoldable, member) as Set
-import Data.String (Pattern(..), split, splitAt, stripPrefix)
+import Data.String (Pattern(..), split, stripPrefix)
 import Data.String as S
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
 import Data.Unfoldable (replicateA)
 import Foreign (ForeignError(..), fail)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
-import Parsing (ParseState(..), ParserT, Position(..), getParserT, stateParserT)
-import Parsing as ParserT
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
+import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
+import Test.QuickCheck.Arbitrary (class Arbitrary)
 import Test.QuickCheck.Gen (Gen)
 import Test.QuickCheck.Gen as Gen
-
---------------------------------------------------------------------------------
--- * Signed Values
---------------------------------------------------------------------------------
-
-data Sign = Pos | Neg
-
-derive instance Eq Sign
-
-instance Arbitrary Sign where
-  arbitrary = do
-    b <- arbitrary
-    pure $ if b then Pos else Neg
-
--- | Represents values that can be either positive or negative.
-data Signed a = Signed Sign a
-
-derive instance Eq a => Eq (Signed a)
-derive instance Functor Signed
-
--- | Coerce a value into a positive signed value
-asSigned :: forall a. a -> Signed a
-asSigned a = Signed Pos a
-
-instance Arbitrary a => Arbitrary (Signed a) where
-  arbitrary = Signed <$> arbitrary <*> arbitrary
 
 --------------------------------------------------------------------------------
 -- * HexString
@@ -104,32 +70,32 @@ genBytes n = fold <$> replicateA n genByte
 
 instance Arbitrary HexString where
   arbitrary = do
-    n <- Gen.chooseInt 0 100
+    n <- Gen.chooseInt 0 50
     genBytes n
 
-_encode :: HexString -> String
-_encode = append "0x" <<< unHex
+toString :: HexString -> String
+toString = append "0x" <<< unHex
 
-_decode :: String -> Either String HexString
-_decode str = case mkHexString str of
+fromString :: String -> Either String HexString
+fromString str = case mkHexString str of
   Just res -> Right res
   Nothing -> Left $ "Failed to parse as HexString: " <> str
 
 instance ReadForeign HexString where
   readImpl f = do
     str <- readImpl f
-    either (fail <<< ForeignError) pure $ _decode str
+    either (fail <<< ForeignError) pure $ fromString str
 
 instance WriteForeign HexString where
-  writeImpl = writeImpl <<< _encode
+  writeImpl = writeImpl <<< toString
 
 instance A.DecodeJson HexString where
   decodeJson json = do
     str <- A.decodeJson json
-    either (const <<< Left $ UnexpectedValue json) Right $ _decode str
+    either (const <<< Left $ A.UnexpectedValue json) Right $ fromString str
 
 instance A.EncodeJson HexString where
-  encodeJson = A.encodeJson <<< _encode
+  encodeJson = A.encodeJson <<< toString
 
 unHex :: HexString -> String
 unHex (HexString hx) = hx
@@ -161,23 +127,6 @@ dropBytes n (HexString hx) = HexString $ S.drop (2 * n) hx
 
 nullWord :: HexString
 nullWord = HexString "0000000000000000000000000000000000000000000000000000000000000000"
-
--- | Read any number of HexDigits
-parseBytes :: forall m. Monad m => Int -> ParserT HexString m HexString
-parseBytes n = fold <$> replicateA n parseByte
-
-parseByte :: forall m. Monad m => ParserT HexString m HexString
-parseByte = do
-  ParseState input@(HexString str) (Position position) _ <- getParserT
-  if numberOfBytes input < 1 then
-    ParserT.fail "Unexpected EOF"
-  else do
-    let
-      { after, before } = splitAt 2 str
-      position' = Position $ position { column = position.column + 1 }
-      newState = ParseState (HexString after) position' true
-      ret = HexString before
-    stateParserT $ const (Tuple ret newState)
 
 --------------------------------------------------------------------------------
 -- | Utils
@@ -225,30 +174,26 @@ getPadLength len =
   in
     if n == 0 then 0 else 32 - n
 
--- | Pad a `Signed HexString` on the left until it has length == 0 mod 64.
-padLeftSigned :: Signed HexString -> HexString
-padLeftSigned (Signed s hx) =
+data PadByte = Zero | FF
+
+-- | Pad a `HexString` on the left with '0's until it has length == 0 mod 64.
+padLeft :: PadByte -> HexString -> HexString
+padLeft b hx =
   let
     padLength = getPadLength $ numberOfBytes hx
-    sgn = if s == Pos then (HexString "00") else (HexString "ff")
-    padding = fold $ replicate padLength $ sgn
+    padding = fold $ replicate padLength case b of
+      Zero -> HexString "00"
+      FF -> HexString "ff"
   in
     padding <> hx
 
--- | Pad a `Signed HexString` on the right until it has length 0 mod 64.
-padRightSigned :: Signed HexString -> HexString
-padRightSigned (Signed s hx) =
+-- | Pad a `HexString` on the right with 0's until it has length 0 mod 64.
+padRight :: PadByte -> HexString -> HexString
+padRight b hx =
   let
     padLength = getPadLength $ numberOfBytes hx
-    sgn = if s `eq` Pos then '0' else 'f'
-    padding = unsafePartial fromJust <<< mkHexString <<< fromCharArray <<< replicate (2 * padLength) $ sgn
+    padding = fold $ replicate padLength case b of
+      Zero -> HexString "00"
+      FF -> HexString "ff"
   in
     hx <> padding
-
--- | Pad a `HexString` on the left with '0's until it has length == 0 mod 64.
-padLeft :: HexString -> HexString
-padLeft = padLeftSigned <<< asSigned
-
--- | Pad a `HexString` on the right with 0's until it has length 0 mod 64.
-padRight :: HexString -> HexString
-padRight = padRightSigned <<< asSigned

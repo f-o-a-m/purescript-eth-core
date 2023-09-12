@@ -3,30 +3,26 @@ module Network.Ethereum.Core.BigNumber
   , BigNumber(..)
   , embed
   , module Int
-  , parseBigNumber
   , pow
   , toString
+  , fromString
   , toTwosComplement256
   , fromTwosComplement256
   , unsafeToInt
-  , toSignedHexString
-  , fromSignedHexString
   ) where
 
 import Prelude
 
-import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
-import Data.Either (Either(..), either, hush)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Int (Radix, binary, decimal, floor, fromNumber, hexadecimal) as Int
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe, fromJust, maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Ring.Module (class LeftModule, class RightModule)
-import Foreign (ForeignError(..), readString, fail)
+import Foreign as F
 import JS.BigInt (BigInt)
 import JS.BigInt as BI
-import Network.Ethereum.Core.HexString (HexString, Signed(..), Sign(..), mkHexString, unHex)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
 import Test.QuickCheck (class Arbitrary, arbitrary)
@@ -44,7 +40,7 @@ derive newtype instance Eq BigNumber
 derive newtype instance Ord BigNumber
 
 instance Show BigNumber where
-  show = toString Int.decimal
+  show (BigNumber bn) = BI.toStringAs Int.decimal bn
 
 derive newtype instance Semiring BigNumber
 derive newtype instance Ring BigNumber
@@ -56,51 +52,27 @@ instance Arbitrary BigNumber where
     n <- arbitrary
     pure $ BigNumber $ BI.fromInt n
 
-toString :: Int.Radix -> BigNumber -> String
-toString radix = BI.toStringAs radix <<< un BigNumber
+fromString :: String -> Maybe BigNumber
+fromString s = BigNumber <$> BI.fromStringAs Int.hexadecimal s
 
-toSignedHexString :: BigNumber -> Maybe (Signed HexString)
-toSignedHexString bn =
-  if bn < zero then Signed Neg <$> mkHexString (toString Int.hexadecimal $ negate bn)
-  else Signed Pos <$> mkHexString (toString Int.hexadecimal bn)
-
-fromSignedHexString :: Signed HexString -> Maybe BigNumber
-fromSignedHexString (Signed sgn hx) =
-  let
-    coeff = case sgn of
-      Pos -> one
-      Neg -> -one
-  in
-    mul coeff <$> parseBigNumber Int.hexadecimal ("0x" <> unHex hx)
-
-_encode :: BigNumber -> String
-_encode = (append "0x") <<< toString Int.hexadecimal
-
-_decode :: String -> Either String BigNumber
-_decode str
-  | str == "0x" = Right zero
-  | otherwise = case BI.fromString str of
-      Nothing -> Left $ "Failed to parse as BigNumber: " <> str
-      Just n -> Right (BigNumber n)
-
-parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
-parseBigNumber _ = hush <<< _decode
+toString :: BigNumber -> String
+toString (BigNumber bn) = BI.toStringAs Int.hexadecimal bn
 
 instance ReadForeign BigNumber where
   readImpl x = do
-    str <- readString x
-    either (fail <<< ForeignError) pure $ _decode str
+    str <- F.readString x
+    maybe (F.fail $ F.ForeignError "Expected SignedHexString") pure (fromString str)
 
 instance WriteForeign BigNumber where
-  writeImpl = writeImpl <<< _encode
+  writeImpl = writeImpl <<< toString
 
 instance A.DecodeJson BigNumber where
   decodeJson json = do
     str <- A.decodeJson json
-    either (const <<< Left $ UnexpectedValue json) Right $ _decode str
+    maybe (Left $ A.TypeMismatch "Expected SignedHexString") pure $ fromString str
 
 instance A.EncodeJson BigNumber where
-  encodeJson = A.encodeJson <<< _encode
+  encodeJson = A.encodeJson <<< toString
 
 toNumber :: BigNumber -> Number
 toNumber = BI.toNumber <<< un BigNumber

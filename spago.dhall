@@ -15,7 +15,6 @@
   , "node-buffer"
   , "nonempty"
   , "ordered-collections"
-  , "parsing"
   , "partial"
   , "prelude"
   , "quickcheck"
@@ -23,7 +22,6 @@
   , "ring-modules"
   , "simple-json"
   , "strings"
-  , "tuples"
   , "unfoldable"
   , "unsafe-coerce"
   ]
