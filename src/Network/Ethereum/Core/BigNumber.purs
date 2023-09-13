@@ -8,8 +8,8 @@ module Network.Ethereum.Core.BigNumber
   , toStringAs
   , fromString
   , fromStringAs
-  , toTwosComplement256
-  , fromTwosComplement256
+  , toTwosComplement
+  , fromTwosComplement
   , unsafeToInt
   ) where
 
@@ -98,15 +98,15 @@ unsafeToInt n = unsafePartial $ fromJust
   $ Int.fromNumber
   $ toNumber n
 
-toTwosComplement256 :: BigNumber -> BigNumber
-toTwosComplement256 (BigNumber n) = BigNumber $
+toTwosComplement :: Int -> BigNumber -> BigNumber
+toTwosComplement _nbits (BigNumber n) = BigNumber $
   if n < zero then (n + (one `BI.shl` nbits)) `BI.and` ((one `BI.shl` nbits) - one)
   else n `BI.and` ((one `BI.shl` nbits) - one)
   where
-  nbits = BI.fromInt 256
+  nbits = BI.fromInt _nbits
 
-fromTwosComplement256 :: BigNumber -> BigNumber
-fromTwosComplement256 (BigNumber n) = BigNumber $
+fromTwosComplement :: Int -> BigNumber -> BigNumber
+fromTwosComplement _nbits (BigNumber n) = BigNumber $
   if n `BI.and` signBitMask == zero then n
   else
     let
@@ -114,7 +114,7 @@ fromTwosComplement256 (BigNumber n) = BigNumber $
     in
       -magnitude
   where
-  nbits = BI.fromInt 256
+  nbits = BI.fromInt _nbits
   signBitMask = one `BI.shl` (nbits - one)
 
 instance LeftModule BigNumber Int where

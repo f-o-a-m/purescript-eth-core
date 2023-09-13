@@ -8,7 +8,7 @@ import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(..), isJust)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
-import Network.Ethereum.Core.BigNumber (BigNumber, embed, fromString, fromTwosComplement256, toString, toTwosComplement256, unsafeToInt)
+import Network.Ethereum.Core.BigNumber (BigNumber, embed, fromString, fromTwosComplement, toString, toTwosComplement, unsafeToInt)
 import Network.Ethereum.Core.HexString (HexString, unHex)
 import Simple.JSON (readImpl, writeImpl)
 import Test.QuickCheck (class Arbitrary, quickCheck, (<?>), (===))
@@ -62,7 +62,7 @@ bigNumberSpec = describe "BigNumber-spec" do
 
     it "can do twosComplement" $ liftEffect do
       quickCheck \(bn :: BigNumber) ->
-        fromTwosComplement256 (toTwosComplement256 bn) === bn
+        fromTwosComplement 256 (toTwosComplement 256 bn) === bn
 
 newtype SmallInt = SmallInt Int
 

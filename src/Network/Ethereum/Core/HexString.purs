@@ -6,6 +6,7 @@ module Network.Ethereum.Core.HexString
   , numberOfBytes
   , dropBytes
   , takeBytes
+  , splitAtByteOffset
   , nullWord
   , padLeft
   , padRight
@@ -124,6 +125,13 @@ takeBytes n (HexString hx) = HexString $ S.take (2 * n) hx
 
 dropBytes :: Int -> HexString -> HexString
 dropBytes n (HexString hx) = HexString $ S.drop (2 * n) hx
+
+splitAtByteOffset :: Int -> HexString -> { before :: HexString, after :: HexString }
+splitAtByteOffset n (HexString hx) =
+  let
+    { before, after } = S.splitAt (2 * n) hx
+  in
+    { before: HexString before, after: HexString after }
 
 nullWord :: HexString
 nullWord = HexString "0000000000000000000000000000000000000000000000000000000000000000"

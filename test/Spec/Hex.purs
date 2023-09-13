@@ -7,9 +7,10 @@ import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(Just), fromJust)
+import Data.Tuple (Tuple(..))
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
-import Network.Ethereum.Core.HexString (HexString, fromAscii, fromUtf8, mkHexString, toAscii, toByteString, toUtf8, unHex)
+import Network.Ethereum.Core.HexString (HexString, fromAscii, fromUtf8, mkHexString, numberOfBytes, splitAtByteOffset, toAscii, toByteString, toUtf8, unHex)
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl, writeImpl)
@@ -28,6 +29,15 @@ hexSpec = describe "hex-spec" do
         bs1 = toByteString $ hx
         bs2 = BS.fromString "1234" Hex
       Just bs1 `shouldEqual` bs2
+
+  describe "HexString manipulations" $ do
+    it "can splitAtByteOffset" $ liftEffect do
+      quickCheck $ \(Tuple a b :: Tuple HexString HexString) ->
+        let
+          n = numberOfBytes a
+          s = splitAtByteOffset n (a <> b)
+        in
+          s.before == a && s.after == b
 
   describe "utf tests" do
 
