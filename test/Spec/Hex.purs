@@ -3,18 +3,19 @@ module CoreSpec.Hex (hexSpec) where
 import Prelude
 
 import Control.Monad.Except (runExcept)
+import Control.Monad.Gen (chooseInt)
 import Data.Argonaut as A
 import Data.ByteString as BS
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(Just), fromJust)
-import Data.Tuple (Tuple(..))
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
 import Network.Ethereum.Core.HexString (HexString, fromAscii, fromUtf8, mkHexString, numberOfBytes, splitAtByteOffset, toAscii, toByteString, toUtf8, unHex)
+import Network.Ethereum.Core.HexString as Hex
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readImpl, writeImpl)
-import Test.QuickCheck (quickCheck)
+import Test.QuickCheck (quickCheckGen)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -32,11 +33,13 @@ hexSpec = describe "hex-spec" do
 
   describe "HexString manipulations" $ do
     it "can splitAtByteOffset" $ liftEffect do
-      quickCheck $ \(Tuple a b :: Tuple HexString HexString) ->
+      quickCheckGen do
+        a <- Hex.generator =<< chooseInt 0 100
+        b <- Hex.generator =<< chooseInt 0 100
         let
           n = numberOfBytes a
           s = splitAtByteOffset n (a <> b)
-        in
+        pure $
           s.before == a && s.after == b
 
   describe "utf tests" do
@@ -66,21 +69,23 @@ hexSpec = describe "hex-spec" do
   describe "json tests" do
 
     it "can convert hex strings to and from json" $ liftEffect do
-      quickCheck $ \(hx :: HexString) ->
+      quickCheckGen do
+        hx <- chooseInt 0 100 >>= Hex.generator
         let
           hxJson = A.fromString $ ("0x" <> unHex hx)
-        in
+        pure $
           (A.stringify <<< A.encodeJson @HexString <$> (A.decodeJson hxJson)) == Right (A.stringify hxJson) &&
             A.decodeJson (A.encodeJson hx) == Right hx
 
     it "can handle deserialization" $ liftEffect do
-      quickCheck $ \(_hxString :: HexString) ->
+      quickCheckGen do
+        _hxString <- chooseInt 0 100 >>= Hex.generator
         let
           hxString = unHex _hxString
           d1 = unsafePartial $ fromJust $ hush $ runExcept $ readImpl (unsafeToForeign hxString)
           d2 = unsafePartial $ fromJust $ hush $ A.decodeJson (A.fromString hxString)
           d3 = unsafePartial $ fromJust $ mkHexString hxString
-        in
+        pure $
           d3 == d1
             && d3 == d2
             && runExcept (readImpl (writeImpl d1)) == Right d3

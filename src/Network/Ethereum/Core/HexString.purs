@@ -18,16 +18,18 @@ module Network.Ethereum.Core.HexString
   , fromAscii
   , toByteString
   , fromByteString
-  , genBytes
+  , generator
   ) where
 
 import Prelude
 
+import Control.Monad.Gen (class MonadGen, oneOf)
 import Data.Argonaut as A
 import Data.Array (fold, fromFoldable, replicate, unsafeIndex)
 import Data.Array.NonEmpty as NEA
 import Data.ByteString as BS
 import Data.Either (Either(..), either)
+import Data.List.Lazy (replicateM)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.NonEmpty (NonEmpty(..))
 import Data.Set (fromFoldable, member) as Set
@@ -40,9 +42,6 @@ import Foreign (ForeignError(..), fail)
 import Node.Encoding (Encoding(Hex, UTF8, ASCII))
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
-import Test.QuickCheck.Arbitrary (class Arbitrary)
-import Test.QuickCheck.Gen (Gen)
-import Test.QuickCheck.Gen as Gen
 
 --------------------------------------------------------------------------------
 -- * HexString
@@ -59,20 +58,14 @@ derive newtype instance Ord HexString
 derive newtype instance Semigroup HexString
 derive newtype instance Monoid HexString
 
-genBytes :: Int -> Gen HexString
-genBytes n = fold <$> replicateA n genByte
+generator :: forall m. MonadGen m => Int -> m HexString
+generator n = fold <$> replicateA n genByte
   where
-  genByte :: Gen HexString
   genByte = do
-    cs <- Gen.listOf 2 (Gen.oneOf (pure <$> hexAlph))
+    cs <- replicateM 2 (oneOf (pure <$> hexAlph))
     pure $ HexString $ fromCharArray (fromFoldable cs)
     where
     hexAlph = NEA.fromNonEmpty $ NonEmpty '0' (toCharArray "123456789abcdefABCDEF")
-
-instance Arbitrary HexString where
-  arbitrary = do
-    n <- Gen.chooseInt 0 50
-    genBytes n
 
 toString :: HexString -> String
 toString = append "0x" <<< unHex

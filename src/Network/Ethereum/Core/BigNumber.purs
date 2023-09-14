@@ -11,14 +11,17 @@ module Network.Ethereum.Core.BigNumber
   , toTwosComplement
   , fromTwosComplement
   , unsafeToInt
+  , generator
   ) where
 
 import Prelude
 
+import Control.Monad.Gen (class MonadGen, chooseInt)
 import Data.Argonaut as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Int (Radix, binary, decimal, floor, fromNumber, hexadecimal) as Int
+import Data.Int (hexadecimal)
 import Data.Maybe (Maybe, fromJust, fromMaybe, maybe)
 import Data.Newtype (class Newtype, un)
 import Data.Ring.Module (class LeftModule, class RightModule)
@@ -26,9 +29,9 @@ import Data.String (Pattern(..), stripPrefix)
 import Foreign as F
 import JS.BigInt (BigInt)
 import JS.BigInt as BI
+import Network.Ethereum.Core.HexString as Hex
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
-import Test.QuickCheck (class Arbitrary, arbitrary)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
@@ -50,10 +53,15 @@ derive newtype instance Ring BigNumber
 instance CommutativeRing BigNumber
 derive newtype instance EuclideanRing BigNumber
 
-instance Arbitrary BigNumber where
-  arbitrary = do
-    n <- arbitrary
-    pure $ BigNumber $ BI.fromInt n
+generator :: forall m. MonadGen m => m BigNumber
+generator = do
+  n <- chooseInt 1 32
+  bytes <- Hex.generator n
+  pure
+    $ fromTwosComplement (8 * n)
+    $ BigNumber
+    $ unsafePartial fromJust
+    $ BI.fromStringAs hexadecimal (Hex.unHex bytes)
 
 fromString :: String -> Maybe BigNumber
 fromString s = fromStringAs Int.hexadecimal s

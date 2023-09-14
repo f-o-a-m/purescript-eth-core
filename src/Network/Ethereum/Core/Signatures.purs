@@ -20,10 +20,12 @@ module Network.Ethereum.Core.Signatures
   , ChainId(..)
   , addChainIdOffset
   , removeChainIdOffset
+  , generator
   ) where
 
 import Prelude
 
+import Control.Monad.Gen (class MonadGen)
 import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
 import Data.ByteString as BS
@@ -34,11 +36,11 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Foreign (ForeignError(..), fail)
-import Network.Ethereum.Core.HexString (HexString, dropBytes, fromByteString, genBytes, nullWord, numberOfBytes, takeBytes, toByteString)
+import Network.Ethereum.Core.HexString (HexString, dropBytes, fromByteString, nullWord, numberOfBytes, takeBytes, toByteString)
+import Network.Ethereum.Core.HexString as Hex
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-import Test.QuickCheck (class Arbitrary)
 import Type.Quotient (mkQuotient)
 
 -- | Opaque PrivateKey type
@@ -113,8 +115,8 @@ derive newtype instance Show Address
 derive newtype instance Eq Address
 derive newtype instance Ord Address
 
-instance Arbitrary Address where
-  arbitrary = Address <$> genBytes 20
+generator :: forall m. MonadGen m => m Address
+generator = Address <$> Hex.generator 20
 
 _decode :: HexString -> Either String Address
 _decode hx = case mkAddress hx of
