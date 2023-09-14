@@ -8,7 +8,6 @@ import Data.Argonaut as A
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Ord (abs)
-import Debug as Debug
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
 import Network.Ethereum.Core.BigNumber (BigNumber, embed, fromString, fromTwosComplement, toString, toTwosComplement, unsafeToInt)

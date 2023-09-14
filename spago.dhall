@@ -11,6 +11,7 @@
   , "gen"
   , "integers"
   , "js-bigints"
+  , "lists"
   , "maybe"
   , "newtype"
   , "node-buffer"
