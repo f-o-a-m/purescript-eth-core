@@ -10,7 +10,7 @@ import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Ord (abs)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
-import Network.Ethereum.Core.BigNumber (BigNumber, embed, fromString, fromTwosComplement, toString, toTwosComplement, unsafeToInt)
+import Network.Ethereum.Core.BigNumber (BigNumber, fromInt, fromString, fromTwosComplement, toString, toTwosComplement, unsafeToInt)
 import Network.Ethereum.Core.BigNumber as BigNumber
 import Network.Ethereum.Core.HexString (mkHexString, numberOfBytes, unHex)
 import Network.Ethereum.Core.HexString as Hex
@@ -20,7 +20,6 @@ import Test.QuickCheck (class Arbitrary, quickCheck, quickCheckGen, (<?>), (===)
 import Test.QuickCheck.Gen as Gen
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Type.Proxy (Proxy(..))
 import Test.QuickCheck.Laws (checkLaws)
 import Test.QuickCheck.Laws.Data as Data
 
@@ -38,13 +37,13 @@ bigNumberSpec = describe "BigNumber-spec" do
         pure $ (fromString $ toString bn) == Just bn <?> ("Failed to convert " <> show bn <> " to hex string " <> show (toString bn))
 
     it "can handle turning ints into big numbers" $ liftEffect $ do
-      quickCheck \(x :: Int) -> unsafeToInt (embed x) === x
+      quickCheck \(x :: Int) -> unsafeToInt (fromInt x) === x
 
   describe "BigNumber arithmetic" do
     it "can add, subtract, and multiply BigNumbers as an Int-Alegbra" $ liftEffect do
-      quickCheck \(x :: Int) (y :: Int) -> (embed x + embed y) === embed @BigNumber (x + y)
-      quickCheck \(x :: Int) (y :: Int) -> (embed x - embed y) === embed @BigNumber (x - y)
-      quickCheck \(SmallInt x) (SmallInt y) -> (embed x * embed y) === embed @BigNumber (x * y)
+      quickCheck \(x :: Int) (y :: Int) -> (fromInt x + fromInt y) === fromInt (x + y)
+      quickCheck \(x :: Int) (y :: Int) -> (fromInt x - fromInt y) === fromInt (x - y)
+      quickCheck \(SmallInt x) (SmallInt y) -> (fromInt x * fromInt y) === fromInt (x * y)
 
     it "works like a Ring" $ liftEffect $ checkLaws "BigNumber" $ do
       Data.checkEqGen BigNumber.generator

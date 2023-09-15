@@ -1,7 +1,5 @@
 module Network.Ethereum.Core.BigNumber
-  ( class Algebra
-  , BigNumber(..)
-  , embed
+  ( BigNumber(..)
   , module Int
   , pow
   , toString
@@ -10,6 +8,7 @@ module Network.Ethereum.Core.BigNumber
   , fromStringAs
   , toTwosComplement
   , fromTwosComplement
+  , fromInt
   , unsafeToInt
   , generator
   ) where
@@ -24,7 +23,6 @@ import Data.Int (Radix, binary, decimal, floor, fromNumber, hexadecimal) as Int
 import Data.Int (hexadecimal)
 import Data.Maybe (Maybe, fromJust, fromMaybe, maybe)
 import Data.Newtype (class Newtype, un)
-import Data.Ring.Module (class LeftModule, class RightModule)
 import Data.String (Pattern(..), stripPrefix)
 import Foreign as F
 import JS.BigInt (BigInt)
@@ -125,20 +123,5 @@ fromTwosComplement _nbits (BigNumber n) = BigNumber $
   nbits = BI.fromInt _nbits
   signBitMask = one `BI.shl` (nbits - one)
 
-instance LeftModule BigNumber Int where
-  mzeroL = zero
-  maddL = add
-  msubL = sub
-  mmulL a b = embed a * b
-
-instance RightModule BigNumber Int where
-  mzeroR = zero
-  maddR = add
-  msubR = sub
-  mmulR a b = a * embed b
-
-class (Ring r, Ring a, LeftModule a r, RightModule a r) <= Algebra a r where
-  embed :: r -> a
-
-instance Algebra BigNumber Int where
-  embed = BigNumber <<< BI.fromInt
+fromInt :: Int -> BigNumber
+fromInt = BigNumber <<< BI.fromInt

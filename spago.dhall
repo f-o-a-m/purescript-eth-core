@@ -20,7 +20,6 @@
   , "partial"
   , "prelude"
   , "quotient"
-  , "ring-modules"
   , "simple-json"
   , "strings"
   , "unfoldable"
