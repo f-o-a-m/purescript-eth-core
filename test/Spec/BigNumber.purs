@@ -20,6 +20,9 @@ import Test.QuickCheck (class Arbitrary, quickCheck, quickCheckGen, (<?>), (===)
 import Test.QuickCheck.Gen as Gen
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
+import Type.Proxy (Proxy(..))
+import Test.QuickCheck.Laws (checkLaws)
+import Test.QuickCheck.Laws.Data as Data
 
 bigNumberSpec :: Spec Unit
 bigNumberSpec = describe "BigNumber-spec" do
@@ -43,13 +46,15 @@ bigNumberSpec = describe "BigNumber-spec" do
       quickCheck \(x :: Int) (y :: Int) -> (embed x - embed y) === embed @BigNumber (x - y)
       quickCheck \(SmallInt x) (SmallInt y) -> (embed x * embed y) === embed @BigNumber (x * y)
 
-    it "works like a Euclidian Ring" $ liftEffect $ do
-      quickCheck \(x :: Int) (y :: Int) ->
-        let
-          y' = if y == 0 then 1 else y
-        in
-          (embed x `div` embed y') == embed @BigNumber (x `div` y') &&
-            (embed x `mod` embed y') == embed @BigNumber (x `mod` y')
+    it "works like a Ring" $ liftEffect $ checkLaws "BigNumber" $ do
+      Data.checkEqGen BigNumber.generator
+      Data.checkOrdGen BigNumber.generator
+      Data.checkCommutativeRingGen BigNumber.generator
+      Data.checkSemiringGen BigNumber.generator
+      -- Necessary for the EuclideanRing test
+      -- so as to prevent integer overflow when multiplying large integer values
+      Data.checkEuclideanRingGen BigNumber.generator
+      Data.checkRingGen BigNumber.generator
 
     it "can handle deserialization" $ liftEffect do
       quickCheckGen $ do
