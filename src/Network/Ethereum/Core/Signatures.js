@@ -2,15 +2,6 @@
 import crypto from "crypto";
 import secp256k1 from "secp256k1";
 
-const apiVer = ((typeof secp256k1.ecdsaSign === 'function') && (typeof secp256k1.ecdsaRecover === 'function')) ? 4 : 3;
-
-const signFn =  (apiVer === 4) ? secp256k1.ecdsaSign : secp256k1.sign;
-const recoverFn = (apiVer === 4) ? secp256k1.ecdsaRecover : secp256k1.recover;
-
-if (signFn === undefined || recoverFn === undefined) {
-    throw new Error("Unsupported version of secp256k1");
-}
-
 // copied from ethereumjs-util
 export const isValidPublic = function (publicKey) {
     if (publicKey.length === 64) {
@@ -28,23 +19,18 @@ export const isValidPrivate = function (privateKey) {
 
 // copied from ethereumjs-util, but more flexible with chainId
 export const ecSign = function (privateKey, msgHash) {
-    var sig = signFn(msgHash, privateKey);
+    var sig = secp256k1.ecdsaSign(msgHash, privateKey);
     var ret = {};
     ret.r = Buffer.from(sig.signature.slice(0, 32));
     ret.s = Buffer.from(sig.signature.slice(32, 64));
-    switch (apiVer) {
-        case 4:
-            ret.v = sig.recid;
-            break;
-        default:
-            ret.v = sig.recovery;
-    }
+    ret.v = sig.recid;
     return ret;
 };
 
 // copied from ethereumjs-util, but more flexible with chainId
 export const ecRecover = function (msgHash, signature, v) {
-    var senderPubKey = recoverFn(msgHash, signature, v);
+    let s = new Uint8Array(signature)
+    var senderPubKey = secp256k1.ecdsaRecover(new Uint8Array(signature), v, msgHash);
     return Buffer.from(secp256k1.publicKeyConvert(senderPubKey, false).slice(1));
 };
 
