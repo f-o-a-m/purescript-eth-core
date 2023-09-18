@@ -1,31 +1,35 @@
 module Network.Ethereum.Core.BigNumber
-  ( class Algebra
-  , BigNumber(..)
-  , embed
+  ( BigNumber(..)
   , module Int
-  , parseBigNumber
   , pow
   , toString
+  , toStringAs
+  , fromString
+  , fromStringAs
   , toTwosComplement
+  , fromTwosComplement
+  , fromInt
   , unsafeToInt
+  , generator
   ) where
 
 import Prelude
 
-import Data.Argonaut (JsonDecodeError(..))
+import Control.Monad.Gen (class MonadGen, chooseInt)
 import Data.Argonaut as A
-import Data.Either (Either(..), either, hush)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Int (Radix, binary, decimal, floor, fromNumber, hexadecimal) as Int
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Int (hexadecimal)
+import Data.Maybe (Maybe, fromJust, fromMaybe, maybe)
 import Data.Newtype (class Newtype, un)
-import Data.Ring.Module (class LeftModule, class RightModule)
-import Foreign (ForeignError(..), readString, fail)
+import Data.String (Pattern(..), stripPrefix)
+import Foreign as F
 import JS.BigInt (BigInt)
 import JS.BigInt as BI
+import Network.Ethereum.Core.HexString as Hex
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
-import Test.QuickCheck (class Arbitrary, arbitrary)
 
 --------------------------------------------------------------------------------
 -- * BigNumber
@@ -40,49 +44,52 @@ derive newtype instance Eq BigNumber
 derive newtype instance Ord BigNumber
 
 instance Show BigNumber where
-  show = toString Int.decimal
+  show (BigNumber bn) = BI.toStringAs Int.decimal bn
 
 derive newtype instance Semiring BigNumber
 derive newtype instance Ring BigNumber
 instance CommutativeRing BigNumber
 derive newtype instance EuclideanRing BigNumber
 
-instance Arbitrary BigNumber where
-  arbitrary = do
-    n <- arbitrary
-    pure $ BigNumber $ BI.fromInt n
+generator :: forall m. MonadGen m => m BigNumber
+generator = do
+  n <- chooseInt 1 32
+  bytes <- Hex.generator n
+  pure
+    $ fromTwosComplement (8 * n)
+    $ BigNumber
+    $ unsafePartial fromJust
+    $ BI.fromStringAs hexadecimal (Hex.unHex bytes)
 
-toString :: Int.Radix -> BigNumber -> String
-toString radix = BI.toStringAs radix <<< un BigNumber
+fromString :: String -> Maybe BigNumber
+fromString s = fromStringAs Int.hexadecimal s
 
-_encode :: BigNumber -> String
-_encode = (append "0x") <<< toString Int.hexadecimal
+fromStringAs :: Int.Radix -> String -> Maybe BigNumber
+fromStringAs r s = BigNumber <$> BI.fromStringAs r s
 
-_decode :: String -> Either String BigNumber
-_decode str
-  | str == "0x" = Right zero
-  | otherwise = case BI.fromString str of
-      Nothing -> Left $ "Failed to parse as BigNumber: " <> str
-      Just n -> Right (BigNumber n)
+toString :: BigNumber -> String
+toString bn = toStringAs Int.hexadecimal bn
 
-parseBigNumber :: Int.Radix -> String -> Maybe BigNumber
-parseBigNumber _ = hush <<< _decode
+toStringAs :: Int.Radix -> BigNumber -> String
+toStringAs r (BigNumber bn) = BI.toStringAs r bn
 
 instance ReadForeign BigNumber where
   readImpl x = do
-    str <- readString x
-    either (fail <<< ForeignError) pure $ _decode str
+    _str <- F.readString x
+    let str = fromMaybe _str $ stripPrefix (Pattern "0x") _str
+    maybe (F.fail $ F.ForeignError "Expected hex encoded BigInt") pure (fromString str)
 
 instance WriteForeign BigNumber where
-  writeImpl = writeImpl <<< _encode
+  writeImpl = writeImpl <<< ("0x" <> _) <<< toString
 
 instance A.DecodeJson BigNumber where
   decodeJson json = do
-    str <- A.decodeJson json
-    either (const <<< Left $ UnexpectedValue json) Right $ _decode str
+    _str <- A.decodeJson json
+    let str = fromMaybe _str $ stripPrefix (Pattern "0x") _str
+    maybe (Left $ A.TypeMismatch "Expected hex encoded BigInt") pure $ fromString str
 
 instance A.EncodeJson BigNumber where
-  encodeJson = A.encodeJson <<< _encode
+  encodeJson = A.encodeJson <<< ("0x" <> _) <<< toString
 
 toNumber :: BigNumber -> Number
 toNumber = BI.toNumber <<< un BigNumber
@@ -97,28 +104,24 @@ unsafeToInt n = unsafePartial $ fromJust
   $ Int.fromNumber
   $ toNumber n
 
-toTwosComplement :: BigNumber -> BigNumber
-toTwosComplement n =
-  if n < zero then maxBigNumber + n + one
-  else n
+toTwosComplement :: Int -> BigNumber -> BigNumber
+toTwosComplement _nbits (BigNumber n) = BigNumber $
+  if n < zero then (n + (one `BI.shl` nbits)) `BI.and` ((one `BI.shl` nbits) - one)
+  else n `BI.and` ((one `BI.shl` nbits) - one)
   where
-  maxBigNumber = BigNumber $ unsafePartial $ fromJust $
-    BI.fromString "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  nbits = BI.fromInt _nbits
 
-instance LeftModule BigNumber Int where
-  mzeroL = zero
-  maddL = add
-  msubL = sub
-  mmulL a b = embed a * b
+fromTwosComplement :: Int -> BigNumber -> BigNumber
+fromTwosComplement _nbits (BigNumber n) = BigNumber $
+  if n `BI.and` signBitMask == zero then n
+  else
+    let
+      magnitude = ((BI.not n) `BI.and` ((one `BI.shl` nbits) - one)) + one
+    in
+      -magnitude
+  where
+  nbits = BI.fromInt _nbits
+  signBitMask = one `BI.shl` (nbits - one)
 
-instance RightModule BigNumber Int where
-  mzeroR = zero
-  maddR = add
-  msubR = sub
-  mmulR a b = a * embed b
-
-class (Ring r, Ring a, LeftModule a r, RightModule a r) <= Algebra a r where
-  embed :: r -> a
-
-instance Algebra BigNumber Int where
-  embed = BigNumber <<< BI.fromInt
+fromInt :: Int -> BigNumber
+fromInt = BigNumber <<< BI.fromInt

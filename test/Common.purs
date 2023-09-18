@@ -4,8 +4,8 @@ import Prelude
 
 import Data.ByteString as BS
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Show.Generic (genericShow)
 import Network.Ethereum.Core.BigNumber (BigNumber)
 import Network.Ethereum.Core.HexString as Hex
 import Network.Ethereum.Core.RLP as RLP
@@ -27,11 +27,6 @@ mkHexString' :: String -> Hex.HexString
 mkHexString' hx = case Hex.mkHexString hx of
   Nothing -> unsafeCrashWith $ "Invalid HexString: " <> hx
   Just hx' -> hx'
-
-mkBigNumber' :: String -> BigNumber
-mkBigNumber' bn = case Hex.toBigNumber <$> Hex.mkHexString bn of
-  Nothing -> unsafeCrashWith $ "Invalid HexString: " <> bn
-  Just bn' -> bn'
 
 -- signature stuff should also work on transactions, these are arguable the most compliced examples.
 newtype RawTransaction =

@@ -4,6 +4,6 @@ module Network.Ethereum.Types
   , module Network.Ethereum.Core.Signatures
   ) where
 
-import Network.Ethereum.Core.BigNumber (BigNumber, embed)
+import Network.Ethereum.Core.BigNumber (BigNumber, fromInt)
 import Network.Ethereum.Core.HexString (HexString, mkHexString, unHex)
 import Network.Ethereum.Core.Signatures (Address, mkAddress, unAddress)

@@ -5,7 +5,7 @@ import Prelude
 import Common (RawTransaction(..), makeTransactionMessage, mkAddress', mkHexString')
 import Data.ByteString as BS
 import Data.Maybe (Maybe(..), fromJust)
-import Network.Ethereum.Core.BigNumber (embed, pow)
+import Network.Ethereum.Core.BigNumber (fromInt, pow)
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Network.Ethereum.Core.RLP as RLP
 import Network.Ethereum.Core.Signatures as Sig
@@ -76,10 +76,10 @@ rlpSpec = do
       let
         rawTx = RawTransaction $
           { data: mempty
-          , gas: embed 21000
-          , gasPrice: embed 20 * (embed 10 `pow` 9)
-          , nonce: embed 9
-          , value: Just $ embed 10 `pow` 18
+          , gas: fromInt 21000
+          , gasPrice: fromInt 20 * (fromInt 10 `pow` 9)
+          , nonce: fromInt 9
+          , value: Just $ fromInt 10 `pow` 18
           , to: Just $ mkAddress' "0x3535353535353535353535353535353535353535"
           }
         chainId = Sig.ChainId 1
@@ -93,9 +93,9 @@ rlpSpec = do
       let
         rawTx = RawTransaction $
           { data: mkHexString' "d14e62b80000000000000000000000000000000000000000000000000000000000000001"
-          , gas: embed 41669
-          , gasPrice: embed 1000000000
-          , nonce: embed 41
+          , gas: fromInt 41669
+          , gasPrice: fromInt 1000000000
+          , nonce: fromInt 41
           , value: Nothing
           , to: Just $ mkAddress' "86b89c0906b111508d5caa38e2e61689a124c860"
           }
