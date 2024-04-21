@@ -16,8 +16,8 @@ module Network.Ethereum.Core.HexString
   , fromUtf8
   , toAscii
   , fromAscii
-  , toByteString
-  , fromByteString
+  , toBuffer
+  , fromBuffer
   , generator
   ) where
 
@@ -27,7 +27,7 @@ import Control.Monad.Gen (class MonadGen, oneOf)
 import Data.Argonaut as A
 import Data.Array (fold, fromFoldable, replicate, unsafeIndex)
 import Data.Array.NonEmpty as NEA
-import Data.ByteString as BS
+import Node.Buffer.Immutable as B
 import Data.Either (Either(..), either)
 import Data.List.Lazy (replicateM)
 import Data.Maybe (Maybe(..), fromJust)
@@ -137,14 +137,14 @@ nullWord = HexString "0000000000000000000000000000000000000000000000000000000000
 -- | This breaks at the first null octet, following the web3 function `toUft8`.
 --   Since 'split' always returns a nonempty list, this index is actually safe.
 toUtf8 :: HexString -> String
-toUtf8 hx = flip BS.toString UTF8 $ bs (unHex hx)
+toUtf8 hx = B.toString UTF8 $ bs (unHex hx)
   where
-  bs :: String -> BS.ByteString
-  bs hxstr = unsafePartial fromJust $ BS.fromString hxstr Hex
+  bs :: String -> B.ImmutableBuffer
+  bs hxstr = B.fromString hxstr Hex
 
 -- | Takes a hex string and produces the corresponding ASCII decoded string.
 toAscii :: HexString -> String
-toAscii hx = flip BS.toString ASCII $ unsafePartial $ fromJust $ BS.fromString (unHex hx) Hex
+toAscii hx = B.toString ASCII $ B.fromString (unHex hx) Hex
 
 -- | Get the 'HexString' corresponding to the UTF8 encoding.
 fromUtf8 :: String -> HexString
@@ -152,18 +152,18 @@ fromUtf8 s = unsafePartial fromJust $
   let
     s' = unsafePartial $ split (Pattern "\x0000") s `unsafeIndex` 0
   in
-    BS.fromString s' UTF8 >>= (pure <<< flip BS.toString Hex) >>= mkHexString
+     mkHexString $ B.toString Hex $ B.fromString s' UTF8
 
 -- | Get the 'HexString' corresponding to the ASCII encoding.
 fromAscii :: String -> HexString
 fromAscii s = unsafePartial fromJust $
-  BS.fromString s ASCII >>= (pure <<< flip BS.toString Hex) >>= mkHexString
+  mkHexString $ B.toString Hex $ B.fromString s ASCII 
 
-toByteString :: HexString -> BS.ByteString
-toByteString hx = unsafePartial fromJust (BS.fromString (unHex hx) Hex)
+toBuffer :: HexString -> B.ImmutableBuffer
+toBuffer hx = B.fromString (unHex hx) Hex
 
-fromByteString :: BS.ByteString -> HexString
-fromByteString bs = unsafePartial fromJust $ mkHexString (BS.toString bs Hex)
+fromBuffer :: B.ImmutableBuffer -> HexString
+fromBuffer bs = unsafePartial $ fromJust $ mkHexString $ B.toString Hex bs
 
 --------------------------------------------------------------------------------
 

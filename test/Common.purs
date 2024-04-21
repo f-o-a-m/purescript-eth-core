@@ -2,7 +2,7 @@ module Common where
 
 import Prelude
 
-import Data.ByteString as BS
+import Node.Buffer.Immutable as B
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Show.Generic (genericShow)
@@ -48,7 +48,7 @@ instance Show RawTransaction where
 makeTransactionMessage
   :: Sig.ChainId
   -> RawTransaction
-  -> BS.ByteString
+  -> B.ImmutableBuffer
 makeTransactionMessage (Sig.ChainId chainId) (RawTransaction tx) =
   let
     txWithChainId =

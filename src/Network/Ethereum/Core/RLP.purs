@@ -5,14 +5,14 @@ module Network.Ethereum.Core.RLP
   ) where
 
 import Prelude
-import Data.ByteString (ByteString)
+import Node.Buffer.Immutable (ImmutableBuffer)
 import Network.Ethereum.Core.BigNumber (BigNumber)
 import Network.Ethereum.Core.HexString (HexString, unHex)
 import Network.Ethereum.Core.Signatures (Address, unAddress)
 import Unsafe.Coerce (unsafeCoerce)
 
 class RLPEncode a where
-  rlpEncode :: a -> ByteString
+  rlpEncode :: a -> ImmutableBuffer
 
 data RLPObject
   = RLPNull
@@ -21,7 +21,7 @@ data RLPObject
   | RLPAddress Address
   | RLPInt Int
   | RLPBigNumber BigNumber
-  | RLPByteString ByteString
+  | RLPBuffer ImmutableBuffer
   | RLPArray (Array RLPObject)
 
 data RLPVal = RLPVal
@@ -38,13 +38,13 @@ transRLP obj = case obj of
   RLPHexString hx -> mkRLPVal $ "0x" <> (unHex hx)
   RLPAddress addr -> transRLP <<< RLPHexString $ unAddress addr
   RLPBigNumber bn -> mkRLPVal bn
-  RLPByteString bs -> mkRLPVal bs
+  RLPBuffer bs -> mkRLPVal bs
   RLPArray as -> mkRLPVal $ map transRLP as
   where
   mkRLPVal :: forall a. a -> RLPVal
   mkRLPVal = unsafeCoerce
 
-foreign import _rlpEncode :: RLPVal -> ByteString
+foreign import _rlpEncode :: RLPVal -> ImmutableBuffer
 
 instance RLPEncode RLPObject where
   rlpEncode = _rlpEncode <<< transRLP

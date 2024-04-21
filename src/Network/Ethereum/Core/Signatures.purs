@@ -28,7 +28,7 @@ import Prelude
 import Control.Monad.Gen (class MonadGen)
 import Data.Argonaut (JsonDecodeError(..))
 import Data.Argonaut as A
-import Data.ByteString as BS
+import Node.Buffer.Immutable as B
 import Data.Either (Either(..), either)
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Data.Generic.Rep (class Generic)
@@ -36,42 +36,42 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Foreign (ForeignError(..), fail)
-import Network.Ethereum.Core.HexString (HexString, dropBytes, fromByteString, nullWord, numberOfBytes, takeBytes, toByteString)
+import Network.Ethereum.Core.HexString (HexString, dropBytes, fromBuffer, nullWord, numberOfBytes, takeBytes, toBuffer)
 import Network.Ethereum.Core.HexString as Hex
 import Network.Ethereum.Core.Keccak256 (keccak256)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (class ReadForeign, readImpl, class WriteForeign, writeImpl)
-import Type.Quotient (mkQuotient)
+import Node.Encoding (Encoding(UTF8))
 
 -- | Opaque PrivateKey type
-newtype PrivateKey = PrivateKey BS.ByteString
+newtype PrivateKey = PrivateKey B.ImmutableBuffer
 
 instance Show PrivateKey where
-  show (PrivateKey pk) = show $ fromByteString pk
+  show (PrivateKey pk) = show $ fromBuffer pk
 
 derive instance Eq PrivateKey
 
 -- | Opaque PublicKey type
-newtype PublicKey = PublicKey BS.ByteString
+newtype PublicKey = PublicKey B.ImmutableBuffer
 
 instance Show PublicKey where
-  show (PublicKey pk) = show $ fromByteString pk
+  show (PublicKey pk) = show $ fromBuffer pk
 
 derive instance Eq PublicKey
 
 foreign import isValidPublic
-  :: BS.ByteString
+  :: B.ImmutableBuffer
   -> Boolean
 
 foreign import isValidPrivate
-  :: BS.ByteString
+  :: B.ImmutableBuffer
   -> Boolean
 
 -- | Get the underlying `HexString` representation of a PublicKey.
 unPublicKey
   :: PublicKey
   -> HexString
-unPublicKey (PublicKey pk) = fromByteString pk
+unPublicKey (PublicKey pk) = fromBuffer pk
 
 -- | Attempt to construct a PublicKey from a HexString
 mkPublicKey
@@ -79,25 +79,25 @@ mkPublicKey
   -> Maybe PublicKey
 mkPublicKey publicKey =
   let
-    publicKeyBS = toByteString publicKey
+    publicKeyB = toBuffer publicKey
   in
-    if isValidPublic publicKeyBS then Just $ PublicKey publicKeyBS
+    if isValidPublic publicKeyB then Just $ PublicKey publicKeyB
     else Nothing
 
 -- | Get the underlying `HexString` representation of a PrivateKey
 unPrivateKey
   :: PrivateKey
   -> HexString
-unPrivateKey (PrivateKey pk) = fromByteString pk
+unPrivateKey (PrivateKey pk) = fromBuffer pk
 
 mkPrivateKey
   :: HexString
   -> Maybe PrivateKey
 mkPrivateKey privateKey =
   let
-    privateKeyBS = toByteString privateKey
+    privateKeyB = toBuffer privateKey
   in
-    if isValidPrivate privateKeyBS then Just $ PrivateKey privateKeyBS
+    if isValidPrivate privateKeyB then Just $ PrivateKey privateKeyB
     else Nothing
 
 -- | Produce the `PublicKey` for the corresponding `PrivateKey`.
@@ -160,7 +160,7 @@ publicToAddress
   -> Address
 publicToAddress (PublicKey publicKey) =
   let
-    addrHex = fromByteString $ keccak256 publicKey
+    addrHex = fromBuffer $ keccak256 publicKey
   in
     unsafePartial fromJust <<< mkAddress $ dropBytes 12 addrHex
 
@@ -177,40 +177,40 @@ derive instance Eq Signature
 instance Show Signature where
   show = genericShow
 
-foreign import ecSign :: Fn2 PrivateKey BS.ByteString { r :: BS.ByteString, s :: BS.ByteString, v :: Int }
+foreign import ecSign :: Fn2 PrivateKey B.ImmutableBuffer { r :: B.ImmutableBuffer, s :: B.ImmutableBuffer, v :: Int }
 
 -- | Sign the message with a `PrivateKey`
 signMessage
   :: PrivateKey
-  -> BS.ByteString
+  -> B.ImmutableBuffer
   -> Signature
 signMessage privateKey message =
   let
     { r, s, v } = runFn2 ecSign privateKey message
   in
     Signature
-      { r: fromByteString r
-      , s: fromByteString s
+      { r: fromBuffer r
+      , s: fromBuffer s
       , v
       }
 
 -- | Prefix a message with the "Ethereum Signed Message" prefix
-toEthSignedMessage :: BS.ByteString -> Maybe BS.ByteString
-toEthSignedMessage bs = do
-  let x19 = BS.singleton (mkQuotient 25) -- 0x19 == 25 dec
-  pfx <- BS.fromString "Ethereum Signed Message:\n" BS.UTF8
-  lenStr <- BS.fromString (show $ BS.length bs) BS.UTF8
-  pure $ x19 <> pfx <> lenStr <> bs
+toEthSignedMessage :: B.ImmutableBuffer -> B.ImmutableBuffer
+toEthSignedMessage bs =
+  let x19 = B.fromArray [25] -- 0x19 == 25 dec
+      pfx = B.fromString "Ethereum Signed Message:\n" UTF8
+      lenStr = B.fromString (show $ B.size bs) UTF8
+  in B.concat [x19, pfx, lenStr, bs]
 
-foreign import ecRecover :: Fn3 BS.ByteString BS.ByteString Int PublicKey
+foreign import ecRecover :: Fn3 B.ImmutableBuffer B.ImmutableBuffer Int PublicKey
 
 -- | Recover the sender of the message from the `Signature`.
 recoverSender
-  :: BS.ByteString
+  :: B.ImmutableBuffer
   -> Signature
   -> PublicKey
 recoverSender messageHash (Signature { v, r, s }) =
-  runFn3 ecRecover messageHash (toByteString r <> toByteString s) v
+  runFn3 ecRecover messageHash (B.concat [toBuffer r, toBuffer s]) v
 
 -- | Used in Ethereum to prevent replay attacks
 newtype ChainId = ChainId Int
