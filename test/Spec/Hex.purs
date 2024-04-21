@@ -5,12 +5,12 @@ import Prelude
 import Control.Monad.Except (runExcept)
 import Control.Monad.Gen (chooseInt)
 import Data.Argonaut as A
-import Data.ByteString as BS
+import Node.Buffer.Immutable as B
 import Data.Either (Either(..), hush)
-import Data.Maybe (Maybe(Just), fromJust)
+import Data.Maybe (fromJust)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign)
-import Network.Ethereum.Core.HexString (HexString, fromAscii, fromUtf8, mkHexString, numberOfBytes, splitAtByteOffset, toAscii, toByteString, toUtf8, unHex)
+import Network.Ethereum.Core.HexString (HexString, fromAscii, fromUtf8, mkHexString, numberOfBytes, splitAtByteOffset, toAscii, toBuffer, toUtf8, unHex)
 import Network.Ethereum.Core.HexString as Hex
 import Node.Encoding (Encoding(Hex))
 import Partial.Unsafe (unsafePartial)
@@ -27,9 +27,9 @@ hexSpec = describe "hex-spec" do
     it "can convert byteStrings to HexString" do
       let
         hx = unsafePartial fromJust $ mkHexString "1234"
-        bs1 = toByteString $ hx
-        bs2 = BS.fromString "1234" Hex
-      Just bs1 `shouldEqual` bs2
+        bs1 = toBuffer $ hx
+        bs2 = B.fromString "1234" Hex
+      bs1 `shouldEqual` bs2
 
   describe "HexString manipulations" $ do
     it "can splitAtByteOffset" $ liftEffect do

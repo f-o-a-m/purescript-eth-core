@@ -2,7 +2,6 @@
 , dependencies =
   [ "argonaut"
   , "arrays"
-  , "bytestrings"
   , "effect"
   , "either"
   , "foldable-traversable"
@@ -19,7 +18,6 @@
   , "ordered-collections"
   , "partial"
   , "prelude"
-  , "quotient"
   , "simple-json"
   , "strings"
   , "unfoldable"
