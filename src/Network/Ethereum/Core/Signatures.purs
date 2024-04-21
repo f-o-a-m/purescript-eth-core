@@ -197,10 +197,12 @@ signMessage privateKey message =
 -- | Prefix a message with the "Ethereum Signed Message" prefix
 toEthSignedMessage :: B.ImmutableBuffer -> B.ImmutableBuffer
 toEthSignedMessage bs =
-  let x19 = B.fromArray [25] -- 0x19 == 25 dec
-      pfx = B.fromString "Ethereum Signed Message:\n" UTF8
-      lenStr = B.fromString (show $ B.size bs) UTF8
-  in B.concat [x19, pfx, lenStr, bs]
+  let
+    x19 = B.fromArray [ 25 ] -- 0x19 == 25 dec
+    pfx = B.fromString "Ethereum Signed Message:\n" UTF8
+    lenStr = B.fromString (show $ B.size bs) UTF8
+  in
+    B.concat [ x19, pfx, lenStr, bs ]
 
 foreign import ecRecover :: Fn3 B.ImmutableBuffer B.ImmutableBuffer Int PublicKey
 
@@ -210,7 +212,7 @@ recoverSender
   -> Signature
   -> PublicKey
 recoverSender messageHash (Signature { v, r, s }) =
-  runFn3 ecRecover messageHash (B.concat [toBuffer r, toBuffer s]) v
+  runFn3 ecRecover messageHash (B.concat [ toBuffer r, toBuffer s ]) v
 
 -- | Used in Ethereum to prevent replay attacks
 newtype ChainId = ChainId Int

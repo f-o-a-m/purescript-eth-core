@@ -152,12 +152,14 @@ fromUtf8 s = unsafePartial fromJust $
   let
     s' = unsafePartial $ split (Pattern "\x0000") s `unsafeIndex` 0
   in
-     mkHexString $ B.toString Hex $ B.fromString s' UTF8
+    mkHexString $ B.toString Hex $ B.fromString s' UTF8
 
 -- | Get the 'HexString' corresponding to the ASCII encoding.
 fromAscii :: String -> HexString
-fromAscii s = unsafePartial fromJust $
-  mkHexString $ B.toString Hex $ B.fromString s ASCII 
+fromAscii s = unsafePartial fromJust
+  $ mkHexString
+  $ B.toString Hex
+  $ B.fromString s ASCII
 
 toBuffer :: HexString -> B.ImmutableBuffer
 toBuffer hx = B.fromString (unHex hx) Hex
