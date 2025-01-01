@@ -16,6 +16,6 @@
     "build": "spago build",
     "tidy": "purs-tidy format-in-place \"src/**/*.purs\" \"test/**/*.purs\"",
     "tidy-check": "purs-tidy check \"src/**/*.purs\" \"test/**/*.purs\"",
-    "test": "spago -x test.dhall test"
+    "test": "spago test"
   }
 }
